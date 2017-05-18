@@ -1,4 +1,4 @@
-automerge-plugin
+Autosubmitter
 ================
 
 [![Build Status](https://gerrit-ci.gerritforge.com/view/Plugins-stable-2.14/job/plugin-automerge-plugin-gh-bazel-stable-2.14/badge/icon)](https://gerrit-ci.gerritforge.com/view/Plugins-stable-2.14/job/plugin-automerge-plugin-gh-bazel-stable-2.14/)
