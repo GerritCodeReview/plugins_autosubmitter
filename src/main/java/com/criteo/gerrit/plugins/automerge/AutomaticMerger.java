@@ -112,6 +112,12 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
     if (atomicityHelper.isAtomicReview(change)) {
       processNewAtomicPatchSet(change);
     }
+
+    try {
+      autoSubmitIfMergeable(change);
+    } catch (OrmException | RestApiException | IOException | UpdateException e) {
+      log.error("An exception occured while trying to merge change #" + change.number, e);
+    }
   }
 
   private void onCommendAdded(final CommentAddedEvent newComment) {
@@ -122,13 +128,18 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
     ChangeAttribute change = newComment.change.get();
     try {
       checkReviewExists(change.number);
-      if (atomicityHelper.isSubmittable(change.project, change.number)) {
-        log.info(String.format("Change %d is submittable. Will try to merge all related changes.", change.number));
-        attemptToMerge(change);
-      }
+      autoSubmitIfMergeable(change);
     } catch (RestApiException | OrmException | UpdateException | IOException e) {
       log.error("An exception occured while trying to atomic merge a change.", e);
       throw new RuntimeException(e);
+    }
+  }
+
+  private void autoSubmitIfMergeable(ChangeAttribute change)
+      throws OrmException, RestApiException, NoSuchChangeException, IOException, UpdateException {
+    if (atomicityHelper.isSubmittable(change.project, change.number)) {
+      log.info(String.format("Change %d is submittable. Will try to merge all related changes.", change.number));
+      attemptToMerge(change);
     }
   }
 
