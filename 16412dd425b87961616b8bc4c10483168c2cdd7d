@@ -22,6 +22,30 @@
       "revId": "16412dd425b87961616b8bc4c10483168c2cdd7d",
       "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "47bb6c12_bfe81fac",
+        "filename": "src/main/java/com/criteo/gerrit/plugins/automerge/AutomergeConfig.java",
+        "patchSetId": 3
+      },
+      "lineNbr": 61,
+      "author": {
+        "id": 1006192
+      },
+      "writtenOn": "2017-05-26T13:17:53Z",
+      "side": 0,
+      "message": "Oh yes, thanks for spotting this out.",
+      "parentUuid": "7a285a38_4bde299d",
+      "range": {
+        "startLine": 55,
+        "startChar": 2,
+        "endLine": 61,
+        "endChar": 5
+      },
+      "revId": "16412dd425b87961616b8bc4c10483168c2cdd7d",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
+      "unresolved": false
     }
   ]
 }
