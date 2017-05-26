@@ -138,8 +138,15 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
   private void autoSubmitIfMergeable(ChangeAttribute change)
       throws OrmException, RestApiException, NoSuchChangeException, IOException, UpdateException {
     if (atomicityHelper.isSubmittable(change.project, change.number)) {
-      log.info(String.format("Change %d is submittable. Will try to merge all related changes.", change.number));
-      attemptToMerge(change);
+      if (atomicityHelper.isAtomicReview(change)) {
+        log.info(
+            String.format(
+                "Change %d is submittable. Will try to merge all related changes.", change.number));
+        attemptToMergeAtomic(change);
+      } else {
+        log.info(String.format("Change %d is submittable. Submitting ...", change.number));
+        atomicityHelper.mergeReview(change.project, change.number);
+      }
     }
   }
 
@@ -167,15 +174,14 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
     return false;
   }
 
-  private void attemptToMerge(ChangeAttribute change) throws RestApiException, OrmException, NoSuchChangeException, IOException, UpdateException {
+  private void attemptToMergeAtomic(ChangeAttribute change)
+      throws RestApiException, OrmException, NoSuchChangeException, IOException, UpdateException {
     final List<ChangeInfo> related = Lists.newArrayList();
-    if (atomicityHelper.isAtomicReview(change)) {
-      related.addAll(api.changes().query("status: open AND topic: " + change.topic)
-          .withOption(ListChangesOption.CURRENT_REVISION).get());
-    } else {
-      ChangeApi changeApi = api.changes().id(change.project, change.branch, change.id);
-      related.add(changeApi.get(EnumSet.of(ListChangesOption.CURRENT_REVISION)));
-    }
+    related.addAll(
+        api.changes()
+            .query("status: open AND topic: " + change.topic)
+            .withOption(ListChangesOption.CURRENT_REVISION)
+            .get());
     boolean submittable = true;
     boolean mergeable = true;
     for (final ChangeInfo info : related) {
@@ -191,10 +197,10 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
       if (mergeable) {
         log.debug(String.format("Change %d is mergeable", change.number));
         for (final ChangeInfo info : related) {
-          atomicityHelper.mergeReview(info);
+          atomicityHelper.mergeReview(info.project, info._number);
         }
       } else {
-	  reviewUpdater.commentOnReview(change.project, change.number, AutomergeConfig.CANT_MERGE_COMMENT_FILE);
+        reviewUpdater.commentOnReview(change.project, change.number, AutomergeConfig.CANT_MERGE_COMMENT_FILE);
       }
     }
   }
