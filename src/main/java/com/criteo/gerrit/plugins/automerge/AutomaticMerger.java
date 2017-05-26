@@ -109,10 +109,9 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
 
   private void onPatchSetCreated(final PatchSetCreatedEvent event) {
     ChangeAttribute change = event.change.get();
-    if (!atomicityHelper.isAtomicReview(change)) {
-      return;
+    if (atomicityHelper.isAtomicReview(change)) {
+      processNewAtomicPatchSet(change);
     }
-    processNewAtomicPatchSet(change);
   }
 
   private void onCommendAdded(final CommentAddedEvent newComment) {
