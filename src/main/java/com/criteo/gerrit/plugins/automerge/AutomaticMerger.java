@@ -95,7 +95,7 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
       onPatchSetCreated((PatchSetCreatedEvent)event);
     }
     else if (event instanceof CommentAddedEvent) {
-      onCommendAdded((CommentAddedEvent)event);
+      onCommentAdded((CommentAddedEvent)event);
     }
   }
 
@@ -114,7 +114,7 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
     }
   }
 
-  private void onCommendAdded(final CommentAddedEvent newComment) {
+  private void onCommentAdded(final CommentAddedEvent newComment) {
     if (!shouldProcessCommentEvent(newComment)) {
       return;
     }
