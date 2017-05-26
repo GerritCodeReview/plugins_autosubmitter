@@ -1,6 +1,5 @@
 package com.criteo.gerrit.plugins.automerge;
 
-import com.google.gerrit.common.data.SubmitRecord;
 import com.google.gerrit.extensions.api.changes.SubmitInput;
 import com.google.gerrit.extensions.common.ChangeInfo;
 import com.google.gerrit.reviewdb.client.Account;
@@ -19,7 +18,6 @@ import com.google.gerrit.server.data.ChangeAttribute;
 import com.google.gerrit.server.git.MergeUtil;
 import com.google.gerrit.server.project.ChangeControl;
 import com.google.gerrit.server.project.NoSuchChangeException;
-import com.google.gerrit.server.project.SubmitRuleEvaluator;
 import com.google.gerrit.server.query.change.ChangeData;
 import com.google.gwtorm.server.OrmException;
 import com.google.inject.Inject;
@@ -29,7 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Set;
 
 public class AtomicityHelper {
@@ -109,18 +106,7 @@ public class AtomicityHelper {
    * @throws OrmException
    */
   public boolean isSubmittable(String project, int change) throws OrmException {
-    ChangeData changeData = changeDataFactory.create(db.get(), new Project.NameKey(project), new Change.Id(change));
-    // For draft reviews, the patchSet must be set to avoid an NPE.
-    final List<SubmitRecord> cansubmit = new SubmitRuleEvaluator(changeData).setPatchSet(changeData.currentPatchSet()).evaluate();
-    log.debug(String.format("Checking if change %d is submitable.", change));
-    for (SubmitRecord submit : cansubmit) {
-      if (submit.status != SubmitRecord.Status.OK) {
-        log.debug(String.format("Change %d is not submitable", change));
-        return false;
-      }
-    }
-    log.debug(String.format("Change %d is submitable", change));
-    return true;
+    return changeDataFactory.create(db.get(), new Project.NameKey(project), new Change.Id(change)).isMergeable();
   }
 
   /**
