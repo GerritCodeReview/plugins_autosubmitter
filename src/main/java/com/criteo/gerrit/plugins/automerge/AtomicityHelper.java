@@ -129,10 +129,8 @@ public class AtomicityHelper {
    * @param info
    */
   public void mergeReview(ChangeInfo info) throws Exception {
-    final SubmitInput input = new SubmitInput();
-    input.waitForMerge = true;
-    final RevisionResource r = getRevisionResource(info.project, info._number);
-    submitter.apply(r, input);
+    submitter.apply(getRevisionResource(info.project, info._number),
+        new SubmitInput());
   }
 
   public RevisionResource getRevisionResource(String project, int changeNumber) throws NoSuchChangeException, OrmException {
