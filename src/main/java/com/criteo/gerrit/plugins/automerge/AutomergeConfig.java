@@ -7,8 +7,6 @@ import com.google.inject.Inject;
 import org.eclipse.jgit.lib.Config;
 
 import java.io.File;
-import java.io.IOException;
-
 
 public class AutomergeConfig {
 
@@ -55,9 +53,7 @@ public class AutomergeConfig {
   /**
    * Return a comment from a file located in the gerrit etc_dir
    *
-   * @param filename
    * @return a string containing a comment.
-   * @throws IOException
    */
   public final String getTemplatesPath() {
     return templatesPath.getPath();
