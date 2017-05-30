@@ -32,6 +32,7 @@ import com.google.gerrit.server.data.ChangeAttribute;
 import com.google.gerrit.server.events.CommentAddedEvent;
 import com.google.gerrit.server.events.Event;
 import com.google.gerrit.server.events.PatchSetCreatedEvent;
+import com.google.gerrit.server.events.RefEvent;
 import com.google.gerrit.server.events.TopicChangedEvent;
 import com.google.gerrit.server.git.MergeUtil;
 import com.google.gerrit.server.update.UpdateException;
@@ -96,6 +97,28 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
     }
     else if (event instanceof CommentAddedEvent) {
       onCommentAdded((CommentAddedEvent)event);
+    }
+    else if (event instanceof RefEvent) {
+      onRefEvent((RefEvent) event);
+    }
+  }
+
+  private void onRefEvent(final RefEvent event) {
+    String refName = event.getRefName();
+    try {
+      List<ChangeInfo> changes =
+          api.changes().query("branch:'" + refName + " is:submittable").get();
+      for (ChangeInfo changeInfo : changes) {
+        ChangeAttribute change = null; // how to get this from changeInfo?
+        if (atomicityHelper.isAtomicReview(change)) {
+          processNewAtomicPatchSet(change);
+        }
+      }
+    } catch (RestApiException e) {
+      log.error(
+          "An exception occured while querying submittable changes for ref"
+              + refName,
+          e);
     }
   }
 
