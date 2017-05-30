@@ -3,7 +3,6 @@ package com.criteo.gerrit.plugins.automerge;
 import com.google.gerrit.common.data.SubmitRecord;
 import com.google.gerrit.extensions.api.changes.SubmitInput;
 import com.google.gerrit.extensions.common.ChangeInfo;
-import com.google.gerrit.extensions.restapi.RestApiException;
 import com.google.gerrit.reviewdb.client.Account;
 import com.google.gerrit.reviewdb.client.Change;
 import com.google.gerrit.reviewdb.client.Project;
@@ -128,12 +127,8 @@ public class AtomicityHelper {
    * Merge a review.
    *
    * @param info
-   * @throws RestApiException
-   * @throws NoSuchChangeException
-   * @throws OrmException
-   * @throws IOException
    */
-  public void mergeReview(ChangeInfo info) throws RestApiException, NoSuchChangeException, OrmException, IOException {
+  public void mergeReview(ChangeInfo info) throws Exception {
     final SubmitInput input = new SubmitInput();
     input.waitForMerge = true;
     final RevisionResource r = getRevisionResource(info.project, info._number);
