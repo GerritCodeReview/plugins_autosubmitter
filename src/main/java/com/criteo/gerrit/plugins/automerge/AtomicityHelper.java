@@ -154,10 +154,7 @@ public class AtomicityHelper {
    */
   public void mergeReview(String project, int changeNumber)
       throws RestApiException, NoSuchChangeException, OrmException, IOException {
-    final SubmitInput input = new SubmitInput();
-    input.waitForMerge = true;
-    final RevisionResource r = getRevisionResource(project, changeNumber);
-    submitter.apply(r, input);
+    submitter.apply(getRevisionResource(project, changeNumber), new SubmitInput());
   }
 
   public RevisionResource getRevisionResource(String project, int changeNumber)
