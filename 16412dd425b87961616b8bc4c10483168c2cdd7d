@@ -2,6 +2,23 @@
   "comments": [
     {
       "key": {
+        "uuid": "97c2c237_882772bb",
+        "filename": "src/main/java/com/criteo/gerrit/plugins/automerge/AtomicityHelper.java",
+        "patchSetId": 3
+      },
+      "lineNbr": 138,
+      "author": {
+        "id": 1011123
+      },
+      "writtenOn": "2017-05-30T04:46:16Z",
+      "side": 0,
+      "message": "unrelated removal",
+      "revId": "16412dd425b87961616b8bc4c10483168c2cdd7d",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "7a285a38_4bde299d",
         "filename": "src/main/java/com/criteo/gerrit/plugins/automerge/AutomergeConfig.java",
         "patchSetId": 3
