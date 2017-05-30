@@ -18,6 +18,7 @@ import com.google.common.collect.Lists;
 import com.google.gerrit.common.EventListener;
 import com.google.gerrit.extensions.api.GerritApi;
 import com.google.gerrit.extensions.api.changes.ChangeApi;
+import com.google.gerrit.extensions.api.changes.Changes.QueryRequest;
 import com.google.gerrit.extensions.common.ChangeInfo;
 import com.google.gerrit.extensions.client.ListChangesOption;
 import com.google.gerrit.extensions.events.LifecycleListener;
@@ -32,6 +33,7 @@ import com.google.gerrit.server.data.ChangeAttribute;
 import com.google.gerrit.server.events.CommentAddedEvent;
 import com.google.gerrit.server.events.Event;
 import com.google.gerrit.server.events.PatchSetCreatedEvent;
+import com.google.gerrit.server.events.RefEvent;
 import com.google.gerrit.server.events.TopicChangedEvent;
 import com.google.gerrit.server.git.MergeUtil;
 import com.google.gerrit.server.update.UpdateException;
@@ -47,6 +49,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * Starts at the same time as the gerrit server, and sets up our change hook
@@ -54,177 +57,198 @@ import java.util.List;
  */
 public class AutomaticMerger implements EventListener, LifecycleListener {
 
-  private final static Logger log = LoggerFactory.getLogger(AutomaticMerger.class);
+	private final static Logger log = LoggerFactory.getLogger(AutomaticMerger.class);
 
-  @Inject
-  private GerritApi api;
+	@Inject
+	private GerritApi api;
 
-  @Inject
-  private AtomicityHelper atomicityHelper;
+	@Inject
+	private AtomicityHelper atomicityHelper;
 
-  @Inject
-  ChangeData.Factory changeDataFactory;
+	@Inject
+	ChangeData.Factory changeDataFactory;
 
-  @Inject
-  private AutomergeConfig config;
+	@Inject
+	private AutomergeConfig config;
 
-  @Inject
-  Provider<ReviewDb> db;
+	@Inject
+	Provider<ReviewDb> db;
 
-  @Inject
-  GetRelated getRelated;
+	@Inject
+	GetRelated getRelated;
 
-  @Inject
-  MergeUtil.Factory mergeUtilFactory;
+	@Inject
+	MergeUtil.Factory mergeUtilFactory;
 
-  @Inject
-  Provider<PostReview> reviewer;
+	@Inject
+	Provider<PostReview> reviewer;
 
-  @Inject
-  private ReviewUpdater reviewUpdater;
+	@Inject
+	private ReviewUpdater reviewUpdater;
 
-  @Inject
-  Submit submitter;
+	@Inject
+	Submit submitter;
 
-  @Override
-  synchronized public void onEvent(final Event event) {
-    if (event instanceof TopicChangedEvent) {
-      onTopicChanged((TopicChangedEvent)event);
-    }
-    else if (event instanceof PatchSetCreatedEvent) {
-      onPatchSetCreated((PatchSetCreatedEvent)event);
-    }
-    else if (event instanceof CommentAddedEvent) {
-      onCommentAdded((CommentAddedEvent)event);
-    }
-  }
+	@Override
+	synchronized public void onEvent(final Event event) {
 
-  private void onTopicChanged(final TopicChangedEvent event) {
-    ChangeAttribute change = event.change.get();
-    if (!atomicityHelper.isAtomicReview(change)) {
-      return;
-    }
-    processNewAtomicPatchSet(change);
-  }
+		if (event instanceof RefEvent) {
+			onRefEvent((RefEvent) event);
+		}
+		if (event instanceof TopicChangedEvent) {
+			onTopicChanged((TopicChangedEvent) event);
+		} else if (event instanceof PatchSetCreatedEvent) {
+			onPatchSetCreated((PatchSetCreatedEvent) event);
+		} else if (event instanceof CommentAddedEvent) {
+			onCommentAdded((CommentAddedEvent) event);
+		}
+	}
 
-  private void onPatchSetCreated(final PatchSetCreatedEvent event) {
-    ChangeAttribute change = event.change.get();
-    if (atomicityHelper.isAtomicReview(change)) {
-      processNewAtomicPatchSet(change);
-    }
+	private void onRefEvent(final RefEvent event) {
+		String refName = event.getRefName();
+		try {
+			List<ChangeInfo> changes = api.changes().query("branch:'"+refName+" is:submittable").get();
+			for(ChangeInfo changeInfo: changes) {
+				ChangeAttribute change = null; // how to get this from changeInfo? 
+				if (atomicityHelper.isAtomicReview(change)) {
+					processNewAtomicPatchSet(change);
+				}
+			}
+		} catch (RestApiException e) {
+			log.error("An exception occured while querying submittable changes for ref" + refName, e);
+		}
 
-    try {
-      autoSubmitIfMergeable(change);
-    } catch (OrmException | RestApiException | IOException | UpdateException e) {
-      log.error("An exception occured while trying to merge change #" + change.number, e);
-    }
-  }
+	}
 
-  private void onCommentAdded(final CommentAddedEvent newComment) {
-    if (!shouldProcessCommentEvent(newComment)) {
-      return;
-    }
+	private void onTopicChanged(final TopicChangedEvent event) {
+		ChangeAttribute change = event.change.get();
+		if (!atomicityHelper.isAtomicReview(change)) {
+			return;
+		}
+		processNewAtomicPatchSet(change);
+	}
 
-    ChangeAttribute change = newComment.change.get();
-    try {
-      checkReviewExists(change.number);
-      autoSubmitIfMergeable(change);
-    } catch (RestApiException | OrmException | UpdateException | IOException e) {
-      log.error("An exception occured while trying to atomic merge a change.", e);
-      throw new RuntimeException(e);
-    }
-  }
+	private void onPatchSetCreated(final PatchSetCreatedEvent event) {
+		ChangeAttribute change = event.change.get();
+		if (atomicityHelper.isAtomicReview(change)) {
+			processNewAtomicPatchSet(change);
+		}
 
-  private void autoSubmitIfMergeable(ChangeAttribute change)
-      throws OrmException, RestApiException, NoSuchChangeException, IOException, UpdateException {
-    if (atomicityHelper.isSubmittable(change.project, change.number)) {
-      log.info(String.format("Change %d is submittable. Will try to merge all related changes.", change.number));
-      attemptToMerge(change);
-    }
-  }
+		try {
+			autoSubmitIfMergeable(change);
+		} catch (OrmException | RestApiException | IOException | UpdateException e) {
+			log.error("An exception occured while trying to merge change #" + change.number, e);
+		}
+	}
 
-  /**
-   * Returns true if the plugin must handle this comment, i.e. if we are sure it does not come
-   * from this plugin (to avoid infinite loop).
-   *
-   * @param comment
-   * @return a boolean
-   */
-  private boolean shouldProcessCommentEvent(CommentAddedEvent comment) {
-    AccountAttribute account = comment.author.get();
-    if (!config.getBotEmail().equals(account.email)) {
-      return true;
-    }
-    ApprovalAttribute[] approvals = comment.approvals.get();
-    if (approvals != null) {
-      for (ApprovalAttribute approval : approvals) {
-        // See ReviewUpdate#setMinusOne
-        if (!("Code-Review".equals(approval.type) && "-1".equals(approval.value))) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
+	private void onCommentAdded(final CommentAddedEvent newComment) {
+		if (!shouldProcessCommentEvent(newComment)) {
+			return;
+		}
 
-  private void attemptToMerge(ChangeAttribute change) throws RestApiException, OrmException, NoSuchChangeException, IOException, UpdateException {
-    final List<ChangeInfo> related = Lists.newArrayList();
-    if (atomicityHelper.isAtomicReview(change)) {
-      related.addAll(api.changes().query("status: open AND topic: " + change.topic)
-          .withOption(ListChangesOption.CURRENT_REVISION).get());
-    } else {
-      ChangeApi changeApi = api.changes().id(change.project, change.branch, change.id);
-      related.add(changeApi.get(EnumSet.of(ListChangesOption.CURRENT_REVISION)));
-    }
-    boolean submittable = true;
-    boolean mergeable = true;
-    for (final ChangeInfo info : related) {
-      if (!info.mergeable) {
-        mergeable = false;
-      }
-      if (!atomicityHelper.isSubmittable(info.project, info._number)) {
-        submittable = false;
-      }
-    }
+		ChangeAttribute change = newComment.change.get();
+		try {
+			checkReviewExists(change.number);
+			autoSubmitIfMergeable(change);
+		} catch (RestApiException | OrmException | UpdateException | IOException e) {
+			log.error("An exception occured while trying to atomic merge a change.", e);
+			throw new RuntimeException(e);
+		}
+	}
 
-    if (submittable) {
-      if (mergeable) {
-        log.debug(String.format("Change %d is mergeable", change.number));
-        for (final ChangeInfo info : related) {
-          atomicityHelper.mergeReview(info);
-        }
-      } else {
-	  reviewUpdater.commentOnReview(change.project, change.number, AutomergeConfig.CANT_MERGE_COMMENT_FILE);
-      }
-    }
-  }
+	private void autoSubmitIfMergeable(ChangeAttribute change)
+			throws OrmException, RestApiException, NoSuchChangeException, IOException, UpdateException {
+		if (atomicityHelper.isSubmittable(change.project, change.number)) {
+			log.info(String.format("Change %d is submittable. Will try to merge all related changes.", change.number));
+			attemptToMerge(change);
+		}
+	}
 
-  private void processNewAtomicPatchSet(ChangeAttribute change) {
-    try {
-      checkReviewExists(change.number);
-      if (atomicityHelper.hasDependentReview(change.project, change.number)) {
-        log.info(String.format("Warn the user by setting -1 on change %d, as other atomic changes exists on the same repository.",
-            change.number));
-        reviewUpdater.setMinusOne(change.project, change.number, AutomergeConfig.ATOMIC_REVIEWS_SAME_REPO_FILE);
-      } else {
-        log.info(String.format("Detected atomic review on change %d.", change.number));
-        reviewUpdater.commentOnReview(change.project, change.number, AutomergeConfig.ATOMIC_REVIEW_DETECTED_FILE);
-      }
-    } catch (RestApiException | IOException | OrmException | UpdateException e) {
-      throw new RuntimeException(e);
-    }
-  }
+	/**
+	 * Returns true if the plugin must handle this comment, i.e. if we are sure
+	 * it does not come from this plugin (to avoid infinite loop).
+	 *
+	 * @param comment
+	 * @return a boolean
+	 */
+	private boolean shouldProcessCommentEvent(CommentAddedEvent comment) {
+		AccountAttribute account = comment.author.get();
+		if (!config.getBotEmail().equals(account.email)) {
+			return true;
+		}
+		ApprovalAttribute[] approvals = comment.approvals.get();
+		if (approvals != null) {
+			for (ApprovalAttribute approval : approvals) {
+				// See ReviewUpdate#setMinusOne
+				if (!("Code-Review".equals(approval.type) && "-1".equals(approval.value))) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 
-  private void checkReviewExists(int reviewNumber) throws RestApiException {
-    api.changes().id(reviewNumber).get(EnumSet.of(ListChangesOption.CURRENT_REVISION));
-  }
+	private void attemptToMerge(ChangeAttribute change)
+			throws RestApiException, OrmException, NoSuchChangeException, IOException, UpdateException {
+		final List<ChangeInfo> related = Lists.newArrayList();
+		if (atomicityHelper.isAtomicReview(change)) {
+			related.addAll(api.changes().query("status: open AND topic: " + change.topic)
+					.withOption(ListChangesOption.CURRENT_REVISION).get());
+		} else {
+			ChangeApi changeApi = api.changes().id(change.project, change.branch, change.id);
+			related.add(changeApi.get(EnumSet.of(ListChangesOption.CURRENT_REVISION)));
+		}
+		boolean submittable = true;
+		boolean mergeable = true;
+		for (final ChangeInfo info : related) {
+			if (!info.mergeable) {
+				mergeable = false;
+			}
+			if (!atomicityHelper.isSubmittable(info.project, info._number)) {
+				submittable = false;
+			}
+		}
 
-  @Override
-  public void start() {
-    log.info("Starting automatic merger plugin.");
-  }
+		if (submittable) {
+			if (mergeable) {
+				log.debug(String.format("Change %d is mergeable", change.number));
+				for (final ChangeInfo info : related) {
+					atomicityHelper.mergeReview(info);
+				}
+			} else {
+				reviewUpdater.commentOnReview(change.project, change.number, AutomergeConfig.CANT_MERGE_COMMENT_FILE);
+			}
+		}
+	}
 
-  @Override
-  public void stop() {
-  }
+	private void processNewAtomicPatchSet(ChangeAttribute change) {
+		try {
+			checkReviewExists(change.number);
+			if (atomicityHelper.hasDependentReview(change.project, change.number)) {
+				log.info(String.format(
+						"Warn the user by setting -1 on change %d, as other atomic changes exists on the same repository.",
+						change.number));
+				reviewUpdater.setMinusOne(change.project, change.number, AutomergeConfig.ATOMIC_REVIEWS_SAME_REPO_FILE);
+			} else {
+				log.info(String.format("Detected atomic review on change %d.", change.number));
+				reviewUpdater.commentOnReview(change.project, change.number,
+						AutomergeConfig.ATOMIC_REVIEW_DETECTED_FILE);
+			}
+		} catch (RestApiException | IOException | OrmException | UpdateException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private void checkReviewExists(int reviewNumber) throws RestApiException {
+		api.changes().id(reviewNumber).get(EnumSet.of(ListChangesOption.CURRENT_REVISION));
+	}
+
+	@Override
+	public void start() {
+		log.info("Starting automatic merger plugin.");
+	}
+
+	@Override
+	public void stop() {
+	}
 }
