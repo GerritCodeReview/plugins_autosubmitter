@@ -17,7 +17,6 @@ package com.criteo.gerrit.plugins.automerge;
 import com.google.common.collect.Lists;
 import com.google.gerrit.common.EventListener;
 import com.google.gerrit.extensions.api.GerritApi;
-import com.google.gerrit.extensions.api.changes.ChangeApi;
 import com.google.gerrit.extensions.common.ChangeInfo;
 import com.google.gerrit.extensions.client.ListChangesOption;
 import com.google.gerrit.extensions.events.LifecycleListener;
@@ -32,6 +31,7 @@ import com.google.gerrit.server.data.ChangeAttribute;
 import com.google.gerrit.server.events.CommentAddedEvent;
 import com.google.gerrit.server.events.Event;
 import com.google.gerrit.server.events.PatchSetCreatedEvent;
+import com.google.gerrit.server.events.RefUpdatedEvent;
 import com.google.gerrit.server.events.TopicChangedEvent;
 import com.google.gerrit.server.git.MergeUtil;
 import com.google.gerrit.server.update.UpdateException;
@@ -97,7 +97,13 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
     else if (event instanceof CommentAddedEvent) {
       onCommentAdded((CommentAddedEvent)event);
     }
+    // it is not an else since the previous automatic submit(s) can potentially
+    // trigger others on the whole project/branch
+    if (event instanceof RefUpdatedEvent) {
+      onRefUpdatedEvent((RefUpdatedEvent) event);
+    }
   }
+
 
   private void onTopicChanged(final TopicChangedEvent event) {
     ChangeAttribute change = event.change.get();
@@ -132,6 +138,42 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
     } catch (RestApiException | OrmException | UpdateException | IOException e) {
       log.error("An exception occured while trying to atomic merge a change.", e);
       throw new RuntimeException(e);
+    }
+  }
+
+  private void onRefUpdatedEvent(final RefUpdatedEvent event) {
+    String refName = event.getRefName();
+    String projectName = event.getProjectNameKey().get();
+    try {
+      api.changes()
+          .query("branch:" + refName + " project:" + projectName + " is:submittable")
+          .get()
+          .forEach(
+              submittable -> {
+                try {
+                  log.info(
+                      "Found another submittable change #"
+                          + submittable._number
+                          + " on project "
+                          + projectName
+                          + " during update of ref "
+                          + refName
+                          + ": Submitting ...");
+                  atomicityHelper.mergeReview(submittable.project, submittable._number);
+                } catch (RestApiException | OrmException | IOException e) {
+                  log.error(
+                      "Cannot autosubmit change "
+                          + submittable._number
+                          + " on project "
+                          + projectName
+                          + " to ref "
+                          + refName,
+                      e);
+                }
+              });
+    } catch (RestApiException e) {
+      log.error(
+          "Cannot query submittable changes on project " + projectName + " for ref " + refName);
     }
   }
 
