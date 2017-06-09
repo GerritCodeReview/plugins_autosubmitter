@@ -25,6 +25,29 @@
     },
     {
       "key": {
+        "uuid": "480e0f69_66b2cc9f",
+        "filename": "src/main/java/com/criteo/gerrit/plugins/automerge/AutomaticMerger.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 156,
+      "author": {
+        "id": 1006192
+      },
+      "writtenOn": "2017-06-09T21:08:24Z",
+      "side": 1,
+      "message": "This is wrong: we already have the project name and ref name, why do we need to query the original change?\n\nAdditionally: ref update could happen for other causes, not necessarily for a SHA1 associated to a change.\n\nLet\u0027s just get project name and ref name from the event, and use it for querying other submittable changes on that project/ref.",
+      "range": {
+        "startLine": 153,
+        "startChar": 10,
+        "endLine": 156,
+        "endChar": 25
+      },
+      "revId": "789093c90c2f66a98b9b9740b6ec0c4c1380143e",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "864b2314_91f28509",
         "filename": "src/main/java/com/criteo/gerrit/plugins/automerge/AutomaticMerger.java",
         "patchSetId": 2
