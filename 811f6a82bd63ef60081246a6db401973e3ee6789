@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "e190fc77_4e7be18b",
+        "filename": "src/main/java/com/criteo/gerrit/plugins/automerge/AutomaticMerger.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 162,
+      "author": {
+        "id": 1006192
+      },
+      "writtenOn": "2017-06-09T16:37:13Z",
+      "side": 1,
+      "message": "This isn\u0027t really the change that you cannot submit: the submittable is the one failed.",
+      "range": {
+        "startLine": 162,
+        "startChar": 65,
+        "endLine": 162,
+        "endChar": 73
+      },
+      "revId": "811f6a82bd63ef60081246a6db401973e3ee6789",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
+      "unresolved": false
+    }
+  ]
+}
