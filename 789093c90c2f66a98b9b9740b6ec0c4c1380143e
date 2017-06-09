@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "908e7b52_12d325aa",
+        "filename": "src/main/java/com/criteo/gerrit/plugins/automerge/AutomaticMerger.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 149,
+      "author": {
+        "id": 1006192
+      },
+      "writtenOn": "2017-06-09T20:41:50Z",
+      "side": 1,
+      "message": "How do we know that this is actually a RefUpdateEvent? From the input type it only a RefEvent, not necessarily an update.",
+      "range": {
+        "startLine": 149,
+        "startChar": 37,
+        "endLine": 149,
+        "endChar": 62
+      },
+      "revId": "789093c90c2f66a98b9b9740b6ec0c4c1380143e",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
+      "unresolved": false
+    }
+  ]
+}
