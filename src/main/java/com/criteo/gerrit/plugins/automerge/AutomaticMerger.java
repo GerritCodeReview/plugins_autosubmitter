@@ -106,7 +106,7 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
 
 
   private void onTopicChanged(final TopicChangedEvent event) {
-    ChangeAttribute change = event.change.get();
+    Change change = Change.from(event.change.get());
     if (!atomicityHelper.isAtomicReview(change)) {
       return;
     }
@@ -114,7 +114,7 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
   }
 
   private void onPatchSetCreated(final PatchSetCreatedEvent event) {
-    ChangeAttribute change = event.change.get();
+    Change change = Change.from(event.change.get());
     if (atomicityHelper.isAtomicReview(change)) {
       processNewAtomicPatchSet(change);
     }
@@ -134,7 +134,7 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
     ChangeAttribute change = newComment.change.get();
     try {
       checkReviewExists(change.number);
-      autoSubmitIfMergeable(change);
+      autoSubmitIfMergeable(Change.from(change));
     } catch (RestApiException | OrmException | UpdateException | IOException e) {
       log.error("An exception occured while trying to atomic merge a change.", e);
       throw new RuntimeException(e);
@@ -177,7 +177,7 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
     }
   }
 
-  private void autoSubmitIfMergeable(ChangeAttribute change)
+  private void autoSubmitIfMergeable(Change change)
       throws OrmException, RestApiException, NoSuchChangeException, IOException, UpdateException {
     if (atomicityHelper.isSubmittable(change.project, change.number)) {
       if (atomicityHelper.isAtomicReview(change)) {
@@ -216,7 +216,7 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
     return false;
   }
 
-  private void attemptToMergeAtomic(ChangeAttribute change)
+  private void attemptToMergeAtomic(Change change)
       throws RestApiException, OrmException, NoSuchChangeException, IOException, UpdateException {
     final List<ChangeInfo> related = Lists.newArrayList();
     related.addAll(
@@ -247,7 +247,7 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
     }
   }
 
-  private void processNewAtomicPatchSet(ChangeAttribute change) {
+  private void processNewAtomicPatchSet(Change change) {
     try {
       checkReviewExists(change.number);
       if (atomicityHelper.hasDependentReview(change.project, change.number)) {
