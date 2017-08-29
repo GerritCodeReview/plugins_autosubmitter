@@ -221,7 +221,7 @@ class TestAutomerge < MiniTest::Test
   end
 
   def approve_review(commit_id)
-    execute("#{GERRIT_SSH} gerrit review --verified 1 --code-review 2 #{commit_id}")
+    execute("#{GERRIT_SSH} gerrit review --strict-labels --verified 1 --code-review 2 #{commit_id}")
   end
 
   def publish_draft(commit_id)
@@ -236,15 +236,17 @@ class TestAutomerge < MiniTest::Test
     reviews = gerrit_query("commit:#{commit_id}")
     assert_equal(1, reviews.size, "missing review with commit #{commit_id}")
     review = reviews[0]
-    assert_equal(expected_status, review['status'], "wrong status on review: #{review['number']}")
+    assert_equal(expected_status, review['status'], "wrong status on review #{review['number']} '#{review['subject']}'")
   end
 
   def check_label(commit_id, label_name, expected_label_value)
     reviews = gerrit_query("commit:#{commit_id}", "--all-approvals")
     assert_equal(1, reviews.size, "missing review with commit #{commit_id}")
     review = reviews[0]
-    code_review_approvals = review['patchSets'][0]['approvals'].select {|ap| ap['description'] == "Code-Review"}
-    refute(code_review_approvals.empty?)
+    approvals = review['patchSets'][0]['approvals']
+    refute(approvals.nil?, "No approval on #{commit_id}")
+    code_review_approvals = approvals.select {|ap| ap['description'] == "Code-Review"}
+    refute(code_review_approvals.empty?, "No code-review score on #{commit_id}")
     assert_equal(expected_label_value, code_review_approvals[0]['value'], "wrong label on review: #{review['number']}")
   end
 
