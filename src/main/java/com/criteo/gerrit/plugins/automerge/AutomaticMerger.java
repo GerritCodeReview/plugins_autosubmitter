@@ -230,7 +230,9 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
       if (!info.mergeable) {
         mergeable = false;
       }
-      if (!atomicityHelper.isSubmittable(info.project, info._number)) {
+      boolean passesPrologRules = atomicityHelper.isSubmittable(info.project, info._number);
+      boolean dependsOnNonMergedCommit = atomicityHelper.hasDependentReview(info.project, info._number);
+      if (!passesPrologRules || dependsOnNonMergedCommit) {
         submittable = false;
       }
     }

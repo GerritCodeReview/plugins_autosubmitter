@@ -68,9 +68,27 @@ class TestAutomerge < MiniTest::Test
     approve_review(commit1)
     check_status(commit1, 'NEW')
     check_status(commit2, 'NEW')
+
     approve_review(commit2)
+
     check_status(commit1, 'MERGED')
     check_status(commit2, 'MERGED')
+  end
+
+  def test_crossrepo_topic_2_repos_above_non_mergeable_commit
+    commit1a = create_review(PROJECT1, "review1a on #{PROJECT1}")
+    commit1b = create_review(PROJECT1, "review1b on #{PROJECT1}", "crossrepo/topic2")
+    commit2 = create_review(PROJECT2, "review2 on #{PROJECT2}", "crossrepo/topic2")
+    approve_review(commit1b)
+    check_status(commit1a, 'NEW')
+    check_status(commit1b, 'NEW')
+    check_status(commit2, 'NEW')
+
+    approve_review(commit2)
+
+    check_status(commit1a, 'NEW')
+    check_status(commit1b, 'NEW')
+    check_status(commit2, 'NEW')
   end
 
  def test_crossrepo_topic_2_repos_below_not_merged_commit
@@ -98,6 +116,23 @@ class TestAutomerge < MiniTest::Test
 
     check_status(commit1a, 'MERGED')
     check_status(commit1b, 'MERGED')
+  end
+
+ def test_refupdatedevent_merge_upper_crossrepo
+    commit1a = create_review(PROJECT1, "review1a on #{PROJECT1}")
+    commit1b = create_review(PROJECT1, "review1b on #{PROJECT1}", "crossrepo/topic2")
+    commit2 = create_review(PROJECT2, "review2 on #{PROJECT2}", "crossrepo/topic2")
+    approve_review(commit1b)
+    approve_review(commit2)
+    check_status(commit1a, 'NEW')
+    check_status(commit1b, 'NEW')
+    check_status(commit2, 'NEW')
+
+    approve_review(commit1a)
+
+    check_status(commit1a, 'MERGED')
+    check_status(commit1b, 'MERGED')
+    check_status(commit2, 'MERGED')
   end
 
   def test_refupdatedevent_does_not_merge_non_mergeable_upper_crossrepo
