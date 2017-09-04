@@ -2,6 +2,7 @@ package com.criteo.gerrit.plugins.automerge;
 
 import com.google.gerrit.common.data.SubmitRecord;
 import com.google.gerrit.extensions.api.changes.SubmitInput;
+import com.google.gerrit.extensions.client.ChangeStatus;
 import com.google.gerrit.extensions.restapi.RestApiException;
 import com.google.gerrit.reviewdb.client.Account;
 import com.google.gerrit.reviewdb.client.Project;
@@ -10,6 +11,7 @@ import com.google.gerrit.server.IdentifiedUser;
 import com.google.gerrit.server.account.AccountByEmailCache;
 import com.google.gerrit.server.change.ChangesCollection;
 import com.google.gerrit.server.change.GetRelated;
+import com.google.gerrit.server.change.GetRelated.ChangeAndCommit;
 import com.google.gerrit.server.change.GetRelated.RelatedInfo;
 import com.google.gerrit.server.change.PostReview;
 import com.google.gerrit.server.change.RevisionResource;
@@ -82,7 +84,29 @@ public class AtomicityHelper {
       RevisionResource r = getRevisionResource(project, number);
     RelatedInfo related = getRelated.apply(r);
     log.debug(String.format("Checking for related changes on review %d", number));
-    return related.changes.size() > 0;
+
+    String checkedCommitSha1 = r.getPatchSet().getRevision().get();
+    int firstParentIndex = 0;
+    int i = 0;
+    for (ChangeAndCommit c: related.changes) {
+      if (checkedCommitSha1.equals(c.commit.commit)) {
+          firstParentIndex = i+1;
+          log.debug(String.format("First parent index on review %d is %d on commit %s", number, firstParentIndex, c.commit.commit));
+          break;
+      }
+      i++;
+    }
+
+    boolean hasNonMergedParent = false;
+    for (ChangeAndCommit c: related.changes.subList(firstParentIndex, related.changes.size())) {
+      if (!ChangeStatus.MERGED.toString().equals(c.status)) {
+         log.info(String.format("Found non merged parent commit on review %d: %s", number, c.commit.commit));
+         hasNonMergedParent = true;
+         break;
+      }
+    }
+
+    return hasNonMergedParent;
   }
 
   /**
