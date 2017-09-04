@@ -39,7 +39,7 @@ public class ReviewUpdater {
     applyComment(project, number, comment);
   }
 
-    public void setMinusOne(String project, int number, String commentTemplate) throws Exception {
+  public void setMinusOne(String project, int number, String commentTemplate) throws Exception {
     ReviewInput message = createComment(commentTemplate).label("Code-Review", -1);
     applyComment(project, number, message);
   }

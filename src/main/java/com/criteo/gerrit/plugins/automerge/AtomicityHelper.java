@@ -81,7 +81,7 @@ public class AtomicityHelper {
    * @throws OrmException
    */
   public boolean hasDependentReview(String project, int number) throws IOException, NoSuchChangeException, OrmException {
-      RevisionResource r = getRevisionResource(project, number);
+    RevisionResource r = getRevisionResource(project, number);
     RelatedInfo related = getRelated.apply(r);
     log.debug(String.format("Checking for related changes on review %d", number));
     return related.changes.size() > 0;
