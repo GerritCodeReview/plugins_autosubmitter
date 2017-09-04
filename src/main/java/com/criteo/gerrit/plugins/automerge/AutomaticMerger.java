@@ -159,8 +159,8 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
                           + " during update of ref "
                           + refName
                           + ": Submitting ...");
-                  atomicityHelper.mergeReview(submittable.project, submittable._number);
-                } catch (RestApiException | OrmException | IOException e) {
+                  autoSubmitIfMergeable(Change.from(submittable));
+                } catch (UpdateException | RestApiException | OrmException | IOException e) {
                   log.error(
                       "Cannot autosubmit change "
                           + submittable._number

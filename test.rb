@@ -73,6 +73,35 @@ class TestAutomerge < MiniTest::Test
     check_status(commit2, 'MERGED')
   end
 
+  def test_refupdatedevent_merge_upper_commit
+    commit1a = create_review(PROJECT1, "review1a on #{PROJECT1}")
+    commit1b = create_review(PROJECT1, "review1b on #{PROJECT1}")
+    approve_review(commit1b)
+    check_status(commit1a, 'NEW')
+    check_status(commit1b, 'NEW')
+
+    approve_review(commit1a)
+
+    check_status(commit1a, 'MERGED')
+    check_status(commit1b, 'MERGED')
+  end
+
+  def test_refupdatedevent_does_not_merge_non_mergeable_upper_crossrepo
+    commit1a = create_review(PROJECT1, "review1a on #{PROJECT1}")
+    commit1b = create_review(PROJECT1, "review1b on #{PROJECT1}", "crossrepo/topic2")
+    commit2 = create_review(PROJECT2, "review2 on #{PROJECT2}", "crossrepo/topic2")
+    approve_review(commit1b)
+    check_status(commit1a, 'NEW')
+    check_status(commit1b, 'NEW')
+    check_status(commit2, 'NEW')
+
+    approve_review(commit1a)
+
+    check_status(commit1a, 'MERGED')
+    check_status(commit1b, 'NEW')
+    check_status(commit2, 'NEW')
+  end
+
   def test_two_reviews_with_same_changed_id
     commit1 = create_review(PROJECT1, "review1 on #{PROJECT1}")
     change_id = read_change_id(PROJECT1)
