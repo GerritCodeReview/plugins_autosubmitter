@@ -227,7 +227,7 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
         log.info("Change {} is not mergeable because same topic change {} {}", change.number, info._number,
             !info.mergeable ? "is non mergeable" : "depends on a non merged commit.");
         if (!info.mergeable) {
-          reviewUpdater.commentOnReview(change.project, change.number, AutomergeConfig.CANT_MERGE_COMMENT_FILE);
+          reviewUpdater.commentOnReview(change.project, change.number, config.cantMergeGitConflict);
         }
         return;
       }
@@ -245,10 +245,10 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
       if (atomicityHelper.hasDependentReview(change.project, change.number)) {
         log.info(String.format("Warn the user by setting -1 on change %d, as other atomic changes exists on the same repository.",
             change.number));
-        reviewUpdater.setMinusOne(change.project, change.number, AutomergeConfig.ATOMIC_REVIEWS_SAME_REPO_FILE);
+        reviewUpdater.setMinusOne(change.project, change.number, config.atomicReviewsSameRepo);
       } else {
         log.info(String.format("Detected atomic review on change %d.", change.number));
-        reviewUpdater.commentOnReview(change.project, change.number, AutomergeConfig.ATOMIC_REVIEW_DETECTED_FILE);
+        reviewUpdater.commentOnReview(change.project, change.number, config.atomicReviewDetected);
       }
     } catch (RestApiException | IOException | OrmException | UpdateException e) {
       throw new RuntimeException(e);

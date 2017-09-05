@@ -7,16 +7,17 @@ import com.google.inject.Inject;
 import org.eclipse.jgit.lib.Config;
 
 import java.io.File;
-import java.io.IOException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public class AutomergeConfig {
-
-  public final static String ATOMIC_REVIEW_DETECTED_FILE = "atomic_review_detected.txt";
-  public final static String ATOMIC_REVIEWS_SAME_REPO_FILE = "atomic_review_same_repo.txt";
   public final static String AUTOMERGE_SECTION = "automerge";
   public final static String BOT_EMAIL_KEY = "botEmail";
-  public final static String CANT_MERGE_COMMENT_FILE = "cantmerge.txt";
+
+  public final PluginComment atomicReviewDetected;
+  public final PluginComment atomicReviewsSameRepo;
+  public final PluginComment cantMergeGitConflict;
 
   private final static String defaultBotEmail = "qabot@criteo.com";
   private final static String defaultTopicPrefix = "crossrepo/";
@@ -46,21 +47,23 @@ public class AutomergeConfig {
     }
 
     templatesPath = paths.etc_dir.toFile();
+
+    atomicReviewDetected = new PluginComment(getCommentPath("atomic_review_detected.txt"),
+        "This review is part of a cross-repository change.\n"
+            + "It will be submitted once all related reviews are submittable.");
+    atomicReviewsSameRepo = new PluginComment(getCommentPath("atomic_review_same_repo.txt"),
+        "This review depends on an unmerged commit.\n"
+            + "This is not supported for cross-repository reviews.");
+    cantMergeGitConflict = new PluginComment(getCommentPath("cantmerge.txt"),
+        "This review has all approvals but is not submittable due to a git conflict.");
   }
 
   public final String getBotEmail() {
     return botEmail;
   }
 
-  /**
-   * Return a comment from a file located in the gerrit etc_dir
-   *
-   * @param filename
-   * @return a string containing a comment.
-   * @throws IOException
-   */
-  public final String getTemplatesPath() {
-    return templatesPath.getPath();
+  public final File getCommentPath(String fileName) {
+    return new File(templatesPath.getPath(), fileName);
   }
 
   public final String getTopicPrefix() {

@@ -49,7 +49,7 @@ class TestAutomerge < MiniTest::Test
     commit0 = create_review(PROJECT1, "review0 on #{PROJECT1}")
     commit0b = create_review(PROJECT1, "review0b on #{PROJECT1}", "crossrepo/topic1")
     check_label(commit0b, "Code-Review", "-1")
-    check_last_message_contains(commit0b, "atomic_review_same_repo.txt")
+    check_last_message_contains(commit0b, "This review depends on an unmerged commit.")
   end
 
   def test_normal_topic_2_repos
