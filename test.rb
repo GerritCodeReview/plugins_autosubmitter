@@ -14,11 +14,12 @@ require 'open3'
 PROJECTS_DIR="~/"
 PROJECT1="project1"
 PROJECT2="project2"
+USER="admin"
 
 class TestAutomerge < MiniTest::Test
   HOST = "0.0.0.0"
   PORT = 29418
-  GERRIT_SSH = "ssh -p #{PORT} #{HOST}"
+  GERRIT_SSH = "ssh -l #{USER} -p #{PORT} #{HOST}"
 
   def setup
     clean_local_repo(PROJECT1)
