@@ -86,6 +86,7 @@ class TestAutomerge < MiniTest::Test
 
     approve_review(commit2)
 
+    check_last_message_contains(commit2, "blocked by the non merged change")
     check_status(commit1a, 'NEW')
     check_status(commit1b, 'NEW')
     check_status(commit2, 'NEW')
