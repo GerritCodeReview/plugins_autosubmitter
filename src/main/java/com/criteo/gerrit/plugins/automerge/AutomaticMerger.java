@@ -226,9 +226,8 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
       if (!info.mergeable || dependsOnNonMergedCommit) {
         log.info("Change {} is not mergeable because same topic change {} {}", change.number, info._number,
             !info.mergeable ? "is non mergeable" : "depends on a non merged commit.");
-        if (!info.mergeable) {
-          reviewUpdater.commentOnReview(change.project, change.number, config.cantMergeGitConflict);
-        }
+        reviewUpdater.commentOnReview(change.project, change.number,
+          !info.mergeable ? config.cantMergeGitConflict : config.cantMergeDependsOnNonMerged);
         return;
       }
     }

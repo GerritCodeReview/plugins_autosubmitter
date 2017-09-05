@@ -18,6 +18,7 @@ public class AutomergeConfig {
   public final PluginComment atomicReviewDetected;
   public final PluginComment atomicReviewsSameRepo;
   public final PluginComment cantMergeGitConflict;
+  public final PluginComment cantMergeDependsOnNonMerged;
 
   private final static String defaultBotEmail = "qabot@criteo.com";
   private final static String defaultTopicPrefix = "crossrepo/";
@@ -56,6 +57,8 @@ public class AutomergeConfig {
             + "This is not supported for cross-repository reviews.");
     cantMergeGitConflict = new PluginComment(getCommentPath("cantmerge.txt"),
         "This review has all approvals but is not submittable due to a git conflict.");
+    cantMergeDependsOnNonMerged = new PluginComment(getCommentPath("cantmerge_depends_on_non_merged.txt.txt"),
+        "This review has all approvals but is not submittable because it depends on a non merged commit.");
   }
 
   public final String getBotEmail() {
