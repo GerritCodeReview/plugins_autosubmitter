@@ -73,6 +73,20 @@ class TestAutomerge < MiniTest::Test
     check_status(commit2, 'MERGED')
   end
 
+ def test_crossrepo_topic_2_repos_below_not_merged_commit
+    commit1 = create_review(PROJECT1, "review1 on #{PROJECT1}", "crossrepo/topic2")
+    commit1b = create_review(PROJECT1, "review1b on #{PROJECT1}")
+    commit2 = create_review(PROJECT2, "review2 on #{PROJECT2}", "crossrepo/topic2")
+    approve_review(commit1)
+    check_status(commit1, 'NEW')
+    check_status(commit2, 'NEW')
+
+    approve_review(commit2)
+
+    check_status(commit1, 'MERGED')
+    check_status(commit2, 'MERGED')
+  end
+
   def test_refupdatedevent_merge_upper_commit
     commit1a = create_review(PROJECT1, "review1a on #{PROJECT1}")
     commit1b = create_review(PROJECT1, "review1b on #{PROJECT1}")
