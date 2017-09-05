@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "e132d8a6_6a77ef0e",
+        "filename": "src/main/java/com/criteo/gerrit/plugins/automerge/AutomaticMerger.java",
+        "patchSetId": 3
+      },
+      "lineNbr": 101,
+      "author": {
+        "id": 1021493
+      },
+      "writtenOn": "2017-09-05T11:28:10Z",
+      "side": 1,
+      "message": "This comment was valid when it concerned a RefEvent as in the first patch. This seems not to be any more the case as the last patchset concerns a RefUpdatedEvent. Do you agree?",
+      "range": {
+        "startLine": 100,
+        "startChar": 4,
+        "endLine": 101,
+        "endChar": 49
+      },
+      "revId": "2425dfcfb2e31679410f580fd4e17feb39048da1",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
+      "unresolved": false
+    }
+  ]
+}
