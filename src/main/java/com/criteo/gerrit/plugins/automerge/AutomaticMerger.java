@@ -181,12 +181,9 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
       throws OrmException, RestApiException, NoSuchChangeException, IOException, UpdateException {
     if (atomicityHelper.isSubmittable(change.project, change.number)) {
       if (atomicityHelper.isAtomicReview(change)) {
-        log.info(
-            String.format(
-                "Change %d is submittable. Will try to merge all related changes.", change.number));
         attemptToMergeAtomic(change);
       } else {
-        log.info(String.format("Change %d is submittable. Submitting ...", change.number));
+        log.info("Submitting non-atomic change {}...", change.number);
         atomicityHelper.mergeReview(change.project, change.number);
       }
     }
@@ -224,28 +221,28 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
             .query("status: open AND topic: " + change.topic)
             .withOption(ListChangesOption.CURRENT_REVISION)
             .get());
-    boolean submittable = true;
-    boolean mergeable = true;
     for (final ChangeInfo info : related) {
-      if (!info.mergeable) {
-        mergeable = false;
-      }
-      boolean passesPrologRules = atomicityHelper.isSubmittable(info.project, info._number);
-      boolean dependsOnNonMergedCommit = atomicityHelper.hasDependentReview(info.project, info._number);
-      if (!passesPrologRules || dependsOnNonMergedCommit) {
-        submittable = false;
+      if (!atomicityHelper.isSubmittable(info.project, info._number)) {
+        log.info("Change {} is not submittable because same topic change {} has not all approvals.", change.number, info._number);
+        return;
       }
     }
 
-    if (submittable) {
-      if (mergeable) {
-        log.debug(String.format("Change %d is mergeable", change.number));
-        for (final ChangeInfo info : related) {
-          atomicityHelper.mergeReview(info.project, info._number);
+    for (final ChangeInfo info : related) {
+      boolean dependsOnNonMergedCommit = atomicityHelper.hasDependentReview(info.project, info._number);
+      if (!info.mergeable || dependsOnNonMergedCommit) {
+        log.info("Change {} is not mergeable because same topic change {} {}", change.number, info._number,
+            !info.mergeable ? "is non mergeable" : "depends on a non merged commit.");
+        if (!info.mergeable) {
+          reviewUpdater.commentOnReview(change.project, change.number, AutomergeConfig.CANT_MERGE_COMMENT_FILE);
         }
-      } else {
-        reviewUpdater.commentOnReview(change.project, change.number, AutomergeConfig.CANT_MERGE_COMMENT_FILE);
+        return;
       }
+    }
+
+    log.info("Submitting atomic change {}...", change.number);
+    for (final ChangeInfo info : related) {
+      atomicityHelper.mergeReview(info.project, info._number);
     }
   }
 
