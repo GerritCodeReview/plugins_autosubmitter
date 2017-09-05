@@ -26,7 +26,6 @@ import com.google.gerrit.server.change.GetRelated;
 import com.google.gerrit.server.change.PostReview;
 import com.google.gerrit.server.change.Submit;
 import com.google.gerrit.server.data.AccountAttribute;
-import com.google.gerrit.server.data.ApprovalAttribute;
 import com.google.gerrit.server.data.ChangeAttribute;
 import com.google.gerrit.server.events.CommentAddedEvent;
 import com.google.gerrit.server.events.Event;
@@ -201,14 +200,8 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
     if (!config.getBotEmail().equals(account.email)) {
       return true;
     }
-    ApprovalAttribute[] approvals = comment.approvals.get();
-    if (approvals != null) {
-      for (ApprovalAttribute approval : approvals) {
-        // See ReviewUpdate#setMinusOne
-        if (!("Code-Review".equals(approval.type) && "-1".equals(approval.value))) {
-          return true;
-        }
-      }
+    if (!comment.comment.contains(ReviewUpdater.commentsPrefix)) {
+      return true;
     }
     return false;
   }

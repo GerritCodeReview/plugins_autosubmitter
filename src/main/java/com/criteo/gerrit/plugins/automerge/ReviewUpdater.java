@@ -26,6 +26,13 @@ import java.io.IOException;
 public class ReviewUpdater {
   private final static Logger log = LoggerFactory.getLogger(AutomaticMerger.class);
 
+  /**
+   * Prefix used in front of messages pushed to Gerrit by this plugin. This prefix is used to
+   * discriminate the messages emitted by the plugin from the other messages and avoid infinite
+   * loops.
+   */
+  public static final String commentsPrefix = "[Autosubmitter] ";
+
   @Inject
   ChangeData.Factory changeDataFactory;
 
@@ -52,7 +59,7 @@ public class ReviewUpdater {
   }
 
   private ReviewInput createComment(final String commentTemplate) {
-    return new ReviewInput().message(getCommentFromFile(commentTemplate));
+    return new ReviewInput().message(commentsPrefix + getCommentFromFile(commentTemplate));
   }
 
   private String getCommentFromFile(final String filename) {
