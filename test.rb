@@ -48,7 +48,7 @@ class TestAutomerge < MiniTest::Test
   def test_crossrepo_topic_1_repo_over_not_merged_commit
     commit0 = create_review(PROJECT1, "review0 on #{PROJECT1}")
     commit0b = create_review(PROJECT1, "review0b on #{PROJECT1}", "crossrepo/topic1")
-    check_label(commit0b, "Code-Review", "-1")
+
     check_last_message_contains(commit0b, "This cross-repo review depends on a not merged commit")
   end
 

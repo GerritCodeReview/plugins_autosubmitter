@@ -241,13 +241,12 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
   private void processNewAtomicPatchSet(Change change) {
     try {
       checkReviewExists(change.number);
+      log.info(String.format("Detected atomic review on change %d.", change.number));
+      reviewUpdater.commentOnReview(change.project, change.number, config.atomicReviewDetected.getContent());
       if (atomicityHelper.hasDependentReview(change.project, change.number)) {
-        log.info(String.format("Warn the user by setting -1 on change %d, as other atomic changes exists on the same repository.",
+        log.info(String.format("Warn the user on change %d, as other atomic changes exists on the same repository.",
             change.number));
-        reviewUpdater.setMinusOne(change.project, change.number, config.atomicReviewsSameRepo.getContent());
-      } else {
-        log.info(String.format("Detected atomic review on change %d.", change.number));
-        reviewUpdater.commentOnReview(change.project, change.number, config.atomicReviewDetected.getContent());
+        reviewUpdater.commentOnReview(change.project, change.number, config.atomicReviewsSameRepo.getContent());
       }
     } catch (RestApiException | IOException | OrmException | UpdateException e) {
       throw new RuntimeException(e);

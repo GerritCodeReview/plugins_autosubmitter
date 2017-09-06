@@ -36,11 +36,6 @@ public class ReviewUpdater {
     applyComment(project, number, reviewInput);
   }
 
-  public void setMinusOne(String project, int number, String comment) throws RestApiException, OrmException, IOException, UpdateException {
-    ReviewInput message = createComment(comment).label("Code-Review", -1);
-    applyComment(project, number, message);
-  }
-
   private ReviewInput createComment(String comment) {
     return new ReviewInput().message(commentsPrefix + comment);
   }
