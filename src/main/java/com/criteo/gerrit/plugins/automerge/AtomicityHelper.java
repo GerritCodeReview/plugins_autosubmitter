@@ -28,56 +28,41 @@ import com.google.gerrit.server.query.change.ChangeData;
 import com.google.gwtorm.server.OrmException;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-
+import java.io.IOException;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.Set;
-
 public class AtomicityHelper {
 
-  private final static Logger log = LoggerFactory.getLogger(AtomicityHelper.class);
+  private static final Logger log = LoggerFactory.getLogger(AtomicityHelper.class);
 
-  @Inject
-  ChangeData.Factory changeDataFactory;
+  @Inject ChangeData.Factory changeDataFactory;
 
-  @Inject
-  private ChangesCollection collection;
+  @Inject private ChangesCollection collection;
 
-  @Inject
-  AutomergeConfig config;
+  @Inject AutomergeConfig config;
 
-  @Inject
-  Provider<ReviewDb> db;
+  @Inject Provider<ReviewDb> db;
 
-  @Inject
-  private IdentifiedUser.GenericFactory factory;
+  @Inject private IdentifiedUser.GenericFactory factory;
 
-  @Inject
-  GetRelated getRelated;
+  @Inject GetRelated getRelated;
 
-  @Inject
-  MergeUtil.Factory mergeUtilFactory;
+  @Inject MergeUtil.Factory mergeUtilFactory;
 
-  @Inject
-  Provider<PostReview> reviewer;
+  @Inject Provider<PostReview> reviewer;
 
-  @Inject
-  Submit submitter;
+  @Inject Submit submitter;
 
-  @Inject
-  Emails emails;
+  @Inject Emails emails;
 
-  @Inject
-  ChangeNotes.Factory changeNotesFactory;
+  @Inject ChangeNotes.Factory changeNotesFactory;
 
-  @Inject
-  PermissionBackend permissionBackend;
+  @Inject PermissionBackend permissionBackend;
 
   /**
-   * Check if the current patchset of the specified change has dependent
-   * unmerged changes.
+   * Check if the current patchset of the specified change has dependent unmerged changes.
    *
    * @param project
    * @param number
@@ -86,23 +71,25 @@ public class AtomicityHelper {
    * @throws NoSuchChangeException
    * @throws OrmException
    */
-  public boolean hasDependentReview(String project, int number) throws IOException, NoSuchChangeException, OrmException {
-      RevisionResource r = getRevisionResource(project, number);
+  public boolean hasDependentReview(String project, int number)
+      throws IOException, NoSuchChangeException, OrmException {
+    RevisionResource r = getRevisionResource(project, number);
     RelatedInfo related = getRelated.apply(r);
     log.debug(String.format("Checking for related changes on review %d", number));
     return related.changes.size() > 0;
   }
 
   /**
-   * Check if a change is an atomic change or not. A change is atomic if it has
-   * the atomic topic prefix.
+   * Check if a change is an atomic change or not. A change is atomic if it has the atomic topic
+   * prefix.
    *
    * @param change a ChangeAttribute instance
    * @return true or false
    */
   public boolean isAtomicReview(final ChangeAttribute change) {
     final boolean atomic = change.topic != null && change.topic.startsWith(config.getTopicPrefix());
-    log.debug(String.format("Checking if change %s is an atomic change: %b", change.number, atomic));
+    log.debug(
+        String.format("Checking if change %s is an atomic change: %b", change.number, atomic));
     return atomic;
   }
 
@@ -115,7 +102,9 @@ public class AtomicityHelper {
    * @throws OrmException
    */
   public boolean isSubmittable(String project, int change) throws OrmException {
-    return changeDataFactory.create(db.get(), new Project.NameKey(project), new Change.Id(change)).isMergeable();
+    return changeDataFactory
+        .create(db.get(), new Project.NameKey(project), new Change.Id(change))
+        .isMergeable();
   }
 
   /**
@@ -124,21 +113,19 @@ public class AtomicityHelper {
    * @param info
    */
   public void mergeReview(ChangeInfo info) throws Exception {
-    submitter.apply(getRevisionResource(info.project, info._number),
-        new SubmitInput());
+    submitter.apply(getRevisionResource(info.project, info._number), new SubmitInput());
   }
 
-  public RevisionResource getRevisionResource(String project, int changeNumber) throws NoSuchChangeException, OrmException {
+  public RevisionResource getRevisionResource(String project, int changeNumber)
+      throws NoSuchChangeException, OrmException {
     Change.Id changeId = new Change.Id(changeNumber);
     ChangeNotes notes = changeNotesFactory.createChecked(changeId);
     try {
-      permissionBackend
-        .user(getBotUser())
-        .change(notes)
-        .database(db)
-        .check(READ);
-      ChangeData changeData = changeDataFactory.create(db.get(), new Project.NameKey(project), changeId);
-      RevisionResource r = new RevisionResource(collection.parse(changeId), changeData.currentPatchSet());
+      permissionBackend.user(getBotUser()).change(notes).database(db).check(READ);
+      ChangeData changeData =
+          changeDataFactory.create(db.get(), new Project.NameKey(project), changeId);
+      RevisionResource r =
+          new RevisionResource(collection.parse(changeId), changeData.currentPatchSet());
       return r;
     } catch (ResourceNotFoundException | AuthException | PermissionBackendException e) {
       throw new NoSuchChangeException(changeId);

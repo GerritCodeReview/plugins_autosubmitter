@@ -3,22 +3,20 @@ package com.criteo.gerrit.plugins.automerge;
 import com.google.gerrit.server.config.GerritServerConfig;
 import com.google.gerrit.server.config.SitePaths;
 import com.google.inject.Inject;
-
-import org.eclipse.jgit.lib.Config;
-
 import java.io.File;
+import org.eclipse.jgit.lib.Config;
 
 public class AutomergeConfig {
 
-  public final static String ATOMIC_REVIEW_DETECTED_FILE = "atomic_review_detected.txt";
-  public final static String ATOMIC_REVIEWS_SAME_REPO_FILE = "atomic_review_same_repo.txt";
-  public final static String AUTOMERGE_SECTION = "automerge";
-  public final static String BOT_EMAIL_KEY = "botEmail";
-  public final static String CANT_MERGE_COMMENT_FILE = "cantmerge.txt";
+  public static final String ATOMIC_REVIEW_DETECTED_FILE = "atomic_review_detected.txt";
+  public static final String ATOMIC_REVIEWS_SAME_REPO_FILE = "atomic_review_same_repo.txt";
+  public static final String AUTOMERGE_SECTION = "automerge";
+  public static final String BOT_EMAIL_KEY = "botEmail";
+  public static final String CANT_MERGE_COMMENT_FILE = "cantmerge.txt";
 
-  private final static String defaultBotEmail = "qabot@criteo.com";
-  private final static String defaultTopicPrefix = "crossrepo/";
-  public final static String TOPIC_PREFIX_KEY = "topicPrefix";
+  private static final String defaultBotEmail = "qabot@criteo.com";
+  private static final String defaultTopicPrefix = "crossrepo/";
+  public static final String TOPIC_PREFIX_KEY = "topicPrefix";
 
   public static final String getDefaultBotEmail() {
     return defaultBotEmail;
