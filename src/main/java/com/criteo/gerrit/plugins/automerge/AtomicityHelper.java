@@ -8,8 +8,9 @@ import com.google.gerrit.reviewdb.client.Change;
 import com.google.gerrit.reviewdb.client.Project;
 import com.google.gerrit.reviewdb.server.ReviewDb;
 import com.google.gerrit.server.IdentifiedUser;
-import com.google.gerrit.server.account.AccountByEmailCache;
 import com.google.gerrit.server.account.AccountCache;
+import com.google.gerrit.server.account.Accounts;
+import com.google.gerrit.server.account.Emails;
 import com.google.gerrit.server.change.ChangesCollection;
 import com.google.gerrit.server.change.GetRelated;
 import com.google.gerrit.server.change.GetRelated.RelatedInfo;
@@ -36,9 +37,6 @@ import java.util.Set;
 public class AtomicityHelper {
 
   private final static Logger log = LoggerFactory.getLogger(AtomicityHelper.class);
-
-  @Inject
-  private AccountByEmailCache byEmailCache;
 
   @Inject
   ChangeData.Factory changeDataFactory;
@@ -71,7 +69,13 @@ public class AtomicityHelper {
   AccountCache accountCache;
 
   @Inject
+  Accounts accounts;
+
+  @Inject
   Submit submitter;
+
+  @Inject
+  Emails emails;
 
   /**
    * Check if the current patchset of the specified change has dependent
@@ -115,7 +119,7 @@ public class AtomicityHelper {
   public boolean isSubmittable(String project, int change) throws OrmException {
     ChangeData changeData = changeDataFactory.create(db.get(), new Project.NameKey(project), new Change.Id(change));
     // For draft reviews, the patchSet must be set to avoid an NPE.
-    final List<SubmitRecord> cansubmit = new SubmitRuleEvaluator(accountCache, changeData).setPatchSet(changeData.currentPatchSet()).evaluate();
+    final List<SubmitRecord> cansubmit = new SubmitRuleEvaluator(accountCache, accounts, emails, changeData).setPatchSet(changeData.currentPatchSet()).evaluate();
     log.debug(String.format("Checking if change %d is submitable.", change));
     for (SubmitRecord submit : cansubmit) {
       if (submit.status != SubmitRecord.Status.OK) {
@@ -145,11 +149,14 @@ public class AtomicityHelper {
   }
 
   private IdentifiedUser getBotUser() {
-    final Set<Account.Id> ids = byEmailCache.get(config.getBotEmail());
-    if (ids.isEmpty()) {
-      throw new RuntimeException("No user found with email: " + config.getBotEmail());
+    try {
+      Set<Account.Id> ids = emails.getAccountFor(config.getBotEmail());
+      if (ids.isEmpty()) {
+        throw new RuntimeException("No user found with email: " + config.getBotEmail());
+      }
+      return factory.create(ids.iterator().next());
+    } catch (IOException | OrmException e) {
+      throw new RuntimeException("Unable to get account with email: " + config.getBotEmail(), e);
     }
-    final IdentifiedUser bot = factory.create(ids.iterator().next());
-    return bot;
   }
 }
