@@ -1,8 +1,12 @@
 package com.criteo.gerrit.plugins.automerge;
 
+import static com.google.gerrit.server.permissions.ChangePermission.READ;
+
 import com.google.gerrit.common.data.SubmitRecord;
 import com.google.gerrit.extensions.api.changes.SubmitInput;
 import com.google.gerrit.extensions.common.ChangeInfo;
+import com.google.gerrit.extensions.restapi.AuthException;
+import com.google.gerrit.extensions.restapi.ResourceNotFoundException;
 import com.google.gerrit.reviewdb.client.Account;
 import com.google.gerrit.reviewdb.client.Change;
 import com.google.gerrit.reviewdb.client.Project;
@@ -19,7 +23,9 @@ import com.google.gerrit.server.change.RevisionResource;
 import com.google.gerrit.server.change.Submit;
 import com.google.gerrit.server.data.ChangeAttribute;
 import com.google.gerrit.server.git.MergeUtil;
-import com.google.gerrit.server.project.ChangeControl;
+import com.google.gerrit.server.notedb.ChangeNotes;
+import com.google.gerrit.server.permissions.PermissionBackend;
+import com.google.gerrit.server.permissions.PermissionBackendException;
 import com.google.gerrit.server.project.NoSuchChangeException;
 import com.google.gerrit.server.project.SubmitRuleEvaluator;
 import com.google.gerrit.server.query.change.ChangeData;
@@ -40,9 +46,6 @@ public class AtomicityHelper {
 
   @Inject
   ChangeData.Factory changeDataFactory;
-
-  @Inject
-  private ChangeControl.GenericFactory changeFactory;
 
   @Inject
   private ChangesCollection collection;
@@ -76,6 +79,12 @@ public class AtomicityHelper {
 
   @Inject
   Emails emails;
+
+  @Inject
+  ChangeNotes.Factory changeNotesFactory;
+
+  @Inject
+  PermissionBackend permissionBackend;
 
   /**
    * Check if the current patchset of the specified change has dependent
@@ -142,10 +151,20 @@ public class AtomicityHelper {
   }
 
   public RevisionResource getRevisionResource(String project, int changeNumber) throws NoSuchChangeException, OrmException {
-    ChangeControl ctl = changeFactory.validateFor(db.get(), new Change.Id(changeNumber), getBotUser());
-    ChangeData changeData = changeDataFactory.create(db.get(), new Project.NameKey(project), new Change.Id(changeNumber));
-    RevisionResource r = new RevisionResource(collection.parse(ctl), changeData.currentPatchSet());
-    return r;
+    Change.Id changeId = new Change.Id(changeNumber);
+    ChangeNotes notes = changeNotesFactory.createChecked(changeId);
+    try {
+      permissionBackend
+        .user(getBotUser())
+        .change(notes)
+        .database(db)
+        .check(READ);
+      ChangeData changeData = changeDataFactory.create(db.get(), new Project.NameKey(project), changeId);
+      RevisionResource r = new RevisionResource(collection.parse(changeId), changeData.currentPatchSet());
+      return r;
+    } catch (ResourceNotFoundException | AuthException | PermissionBackendException e) {
+      throw new NoSuchChangeException(changeId);
+    }
   }
 
   private IdentifiedUser getBotUser() {
