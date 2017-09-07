@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "ad4233d5_dd8f3c4d",
+        "filename": "src/main/java/com/criteo/gerrit/plugins/automerge/AtomicityHelper.java",
+        "patchSetId": 3
+      },
+      "lineNbr": 76,
+      "author": {
+        "id": 1029953
+      },
+      "writtenOn": "2017-09-07T10:48:11Z",
+      "side": 1,
+      "message": "Thanks, done.",
+      "parentUuid": "789c8b20_1fb9de71",
+      "range": {
+        "startLine": 76,
+        "startChar": 4,
+        "endLine": 76,
+        "endChar": 23
+      },
+      "revId": "d68438b8c66c475cfa7f1088856d19363af659de",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "71813ee7_577bfcb2",
         "filename": "src/main/java/com/criteo/gerrit/plugins/automerge/AtomicityHelper.java",
         "patchSetId": 3
@@ -36,6 +60,30 @@
       "writtenOn": "2017-09-07T10:41:21Z",
       "side": 1,
       "message": "why is this constructor needed?  shouldn\u0027t the members be @Inject annotated like the others above?",
+      "range": {
+        "startLine": 75,
+        "startChar": 2,
+        "endLine": 80,
+        "endChar": 3
+      },
+      "revId": "d68438b8c66c475cfa7f1088856d19363af659de",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b1738cae_9998c8ba",
+        "filename": "src/main/java/com/criteo/gerrit/plugins/automerge/AtomicityHelper.java",
+        "patchSetId": 3
+      },
+      "lineNbr": 80,
+      "author": {
+        "id": 1029953
+      },
+      "writtenOn": "2017-09-07T10:48:11Z",
+      "side": 1,
+      "message": "I thought this is needed for it to work?\n\nThough looking at the above i could use @Inject.",
+      "parentUuid": "71813ee7_577bfcb2",
       "range": {
         "startLine": 75,
         "startChar": 2,
