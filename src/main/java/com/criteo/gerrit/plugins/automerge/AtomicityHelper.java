@@ -8,7 +8,9 @@ import com.google.gerrit.reviewdb.client.Change;
 import com.google.gerrit.reviewdb.client.Project;
 import com.google.gerrit.reviewdb.server.ReviewDb;
 import com.google.gerrit.server.IdentifiedUser;
-import com.google.gerrit.server.account.AccountByEmailCache;
+import com.google.gerrit.server.account.AccountCache;
+import com.google.gerrit.server.account.Accounts;
+import com.google.gerrit.server.account.Emails;
 import com.google.gerrit.server.change.ChangesCollection;
 import com.google.gerrit.server.change.GetRelated;
 import com.google.gerrit.server.change.GetRelated.RelatedInfo;
@@ -17,6 +19,10 @@ import com.google.gerrit.server.change.RevisionResource;
 import com.google.gerrit.server.change.Submit;
 import com.google.gerrit.server.data.ChangeAttribute;
 import com.google.gerrit.server.git.MergeUtil;
+import com.google.gerrit.server.notedb.ChangeNotes;
+import com.google.gerrit.server.permissions.ChangePermission;
+import com.google.gerrit.server.permissions.PermissionBackend;
+import com.google.gerrit.server.permissions.PermissionBackendException;
 import com.google.gerrit.server.project.ChangeControl;
 import com.google.gerrit.server.project.NoSuchChangeException;
 import com.google.gerrit.server.project.SubmitRuleEvaluator;
@@ -37,13 +43,19 @@ public class AtomicityHelper {
   private final static Logger log = LoggerFactory.getLogger(AtomicityHelper.class);
 
   @Inject
-  private AccountByEmailCache byEmailCache;
+  private AccountCache accountCache;
+
+  @Inject
+  private Accounts accounts;
 
   @Inject
   ChangeData.Factory changeDataFactory;
 
   @Inject
   private ChangeControl.GenericFactory changeFactory;
+
+  @Inject
+  private ChangeNotes.Factory changeNotesFactory;
 
   @Inject
   private ChangesCollection collection;
@@ -55,6 +67,9 @@ public class AtomicityHelper {
   Provider<ReviewDb> db;
 
   @Inject
+  private Emails emails;
+
+  @Inject
   private IdentifiedUser.GenericFactory factory;
 
   @Inject
@@ -62,6 +77,9 @@ public class AtomicityHelper {
 
   @Inject
   MergeUtil.Factory mergeUtilFactory;
+
+  @Inject
+  private PermissionBackend permissionBackend;
 
   @Inject
   Provider<PostReview> reviewer;
@@ -111,7 +129,7 @@ public class AtomicityHelper {
   public boolean isSubmittable(String project, int change) throws OrmException {
     ChangeData changeData = changeDataFactory.create(db.get(), new Project.NameKey(project), new Change.Id(change));
     // For draft reviews, the patchSet must be set to avoid an NPE.
-    final List<SubmitRecord> cansubmit = new SubmitRuleEvaluator(changeData).setPatchSet(changeData.currentPatchSet()).evaluate();
+    final List<SubmitRecord> cansubmit = new SubmitRuleEvaluator(accountCache, accounts, emails, changeData).setPatchSet(changeData.currentPatchSet()).evaluate();
     log.debug(String.format("Checking if change %d is submitable.", change));
     for (SubmitRecord submit : cansubmit) {
       if (submit.status != SubmitRecord.Status.OK) {
@@ -134,14 +152,20 @@ public class AtomicityHelper {
   }
 
   public RevisionResource getRevisionResource(String project, int changeNumber) throws NoSuchChangeException, OrmException {
-    ChangeControl ctl = changeFactory.validateFor(db.get(), new Change.Id(changeNumber), getBotUser());
+    ChangeNotes notes = changeNotesFactory.createChecked(new Change.Id(changeNumber));
+    permissionBackend
+        .user(getBotUser())
+        .change(notes)
+        .database(db)
+        .check(ChangePermission.READ);
+    // ChangeControl ctl = changeFactory.validateFor(db.get(), new Change.Id(changeNumber), getBotUser());
     ChangeData changeData = changeDataFactory.create(db.get(), new Project.NameKey(project), new Change.Id(changeNumber));
-    RevisionResource r = new RevisionResource(collection.parse(ctl), changeData.currentPatchSet());
+    RevisionResource r = new RevisionResource(notes, changeData.currentPatchSet());
     return r;
   }
 
-  private IdentifiedUser getBotUser() {
-    final Set<Account.Id> ids = byEmailCache.get(config.getBotEmail());
+  private IdentifiedUser getBotUser() throws IOException {
+    final Set<Account.Id> ids = emails.getAccountFor(config.getBotEmail());
     if (ids.isEmpty()) {
       throw new RuntimeException("No user found with email: " + config.getBotEmail());
     }
