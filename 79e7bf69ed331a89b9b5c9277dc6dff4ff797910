@@ -2,6 +2,29 @@
   "comments": [
     {
       "key": {
+        "uuid": "dc24cf03_b13943b2",
+        "filename": "src/main/java/com/criteo/gerrit/plugins/automerge/AtomicityHelper.java",
+        "patchSetId": 4
+      },
+      "lineNbr": 132,
+      "author": {
+        "id": 1011123
+      },
+      "writtenOn": "2017-09-07T13:12:30Z",
+      "side": 1,
+      "message": "This is not needed after Luca\u0027s change",
+      "range": {
+        "startLine": 132,
+        "startChar": 4,
+        "endLine": 132,
+        "endChar": 162
+      },
+      "revId": "79e7bf69ed331a89b9b5c9277dc6dff4ff797910",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "24286f77_6c1f5455",
         "filename": "src/main/java/com/criteo/gerrit/plugins/automerge/AtomicityHelper.java",
         "patchSetId": 4
@@ -13,6 +36,30 @@
       "writtenOn": "2017-09-07T12:57:25Z",
       "side": 1,
       "message": "This one still needs to move into it\u0027s own change\n\nERROR: /Users/patrickmulhall/Documents/workspace/gerrit/plugins/autosubmitter/BUILD:4:1: Building plugins/autosubmitter/libautosubmitter__plugin.jar (5 source files) failed: Worker process sent response with exit code: 1.\nplugins/autosubmitter/src/main/java/com/criteo/gerrit/plugins/automerge/AtomicityHelper.java:126: error: cannot find symbol\n    ChangeControl ctl \u003d changeFactory.validateFor(db.get(), new Change.Id(changeNumber), getBotUser());\n                                     ^\n  symbol:   method validateFor(ReviewDb,Id,IdentifiedUser)\n  location: variable changeFactory of type GenericFactory\nTarget //plugins/autosubmitter:autosubmitter failed to build\nUse --verbose_failures to see the command lines of failed build steps.\nINFO: Elapsed time: 0.740s, Critical Path: 0.61s",
+      "range": {
+        "startLine": 154,
+        "startChar": 0,
+        "endLine": 174,
+        "endChar": 3
+      },
+      "revId": "79e7bf69ed331a89b9b5c9277dc6dff4ff797910",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "dbf5b985_c0258731",
+        "filename": "src/main/java/com/criteo/gerrit/plugins/automerge/AtomicityHelper.java",
+        "patchSetId": 4
+      },
+      "lineNbr": 174,
+      "author": {
+        "id": 1011123
+      },
+      "writtenOn": "2017-09-07T13:12:30Z",
+      "side": 1,
+      "message": "I fixed this in https://gerrit-review.googlesource.com/#/c/plugins/autosubmitter/+/125551/1",
+      "parentUuid": "24286f77_6c1f5455",
       "range": {
         "startLine": 154,
         "startChar": 0,
