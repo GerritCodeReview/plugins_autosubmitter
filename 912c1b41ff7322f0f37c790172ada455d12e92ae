@@ -16,6 +16,24 @@
       "revId": "912c1b41ff7322f0f37c790172ada455d12e92ae",
       "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "52ee6c3b_312f55d8",
+        "filename": "src/main/java/com/criteo/gerrit/plugins/automerge/AutomaticMerger.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 237,
+      "author": {
+        "id": 1021493
+      },
+      "writtenOn": "2017-09-08T11:58:02Z",
+      "side": 1,
+      "message": "this is in a later review: https://gerrit-review.googlesource.com/#/c/plugins/autosubmitter/+/124776/",
+      "parentUuid": "d7a39754_c949c655",
+      "revId": "912c1b41ff7322f0f37c790172ada455d12e92ae",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
+      "unresolved": false
     }
   ]
 }
