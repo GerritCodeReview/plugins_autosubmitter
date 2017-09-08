@@ -16,6 +16,24 @@
       "revId": "cea7a4ec2926519372a62c482c8e7b4210f8d3fa",
       "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "f7668306_9bfa7cc4",
+        "filename": "test.rb",
+        "patchSetId": 2
+      },
+      "lineNbr": 92,
+      "author": {
+        "id": 1021493
+      },
+      "writtenOn": "2017-09-08T12:46:17Z",
+      "side": 1,
+      "message": "this case is tested by test_refupdatedevent_merge_upper_crossrepo",
+      "parentUuid": "ff56c281_699c5db4",
+      "revId": "cea7a4ec2926519372a62c482c8e7b4210f8d3fa",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
+      "unresolved": false
     }
   ]
 }
