@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "860136b0_516dc07f",
+        "filename": "src/main/java/com/criteo/gerrit/plugins/automerge/AtomicityHelper.java",
+        "patchSetId": 5
+      },
+      "lineNbr": 109,
+      "author": {
+        "id": 1021493
+      },
+      "writtenOn": "2017-09-08T14:46:06Z",
+      "side": 1,
+      "message": "The method isSubmittable is supposed to check the \"approvals\", not the \"mergeability\". It seems isMergeable() checks if there are git conflicts for instance but not if the approvals are ok.",
+      "range": {
+        "startLine": 109,
+        "startChar": 99,
+        "endLine": 109,
+        "endChar": 110
+      },
+      "revId": "30ee08c8a606f97252bca6f8ed6c2b0a5cf1ceed",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
+      "unresolved": false
+    }
+  ]
+}
