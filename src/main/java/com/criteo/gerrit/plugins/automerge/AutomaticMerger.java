@@ -27,6 +27,7 @@ import com.google.gerrit.server.change.PostReview;
 import com.google.gerrit.server.change.Submit;
 import com.google.gerrit.server.data.AccountAttribute;
 import com.google.gerrit.server.data.ChangeAttribute;
+import com.google.gerrit.server.events.ChangeEvent;
 import com.google.gerrit.server.events.CommentAddedEvent;
 import com.google.gerrit.server.events.Event;
 import com.google.gerrit.server.events.PatchSetCreatedEvent;
@@ -87,11 +88,10 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
 
   @Override
   synchronized public void onEvent(final Event event) {
-    if (event instanceof TopicChangedEvent) {
-      onTopicChanged((TopicChangedEvent)event);
-    }
-    else if (event instanceof PatchSetCreatedEvent) {
-      onPatchSetCreated((PatchSetCreatedEvent)event);
+    if (event instanceof TopicChangedEvent ||
+        event instanceof PatchSetCreatedEvent) {
+      Change change = Change.from(((ChangeEvent)event).change.get());
+      onNewOrChangedPatchSet(change);
     }
     else if (event instanceof CommentAddedEvent) {
       onCommentAdded((CommentAddedEvent)event);
@@ -103,21 +103,10 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
     }
   }
 
-
-  private void onTopicChanged(final TopicChangedEvent event) {
-    Change change = Change.from(event.change.get());
-    if (!atomicityHelper.isAtomicReview(change)) {
-      return;
-    }
-    processNewAtomicPatchSet(change);
-  }
-
-  private void onPatchSetCreated(final PatchSetCreatedEvent event) {
-    Change change = Change.from(event.change.get());
+  private void onNewOrChangedPatchSet(Change change) {
     if (atomicityHelper.isAtomicReview(change)) {
       processNewAtomicPatchSet(change);
     }
-
     try {
       autoSubmitIfMergeable(change);
     } catch (OrmException | RestApiException | IOException | UpdateException e) {
