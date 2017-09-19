@@ -94,6 +94,30 @@
       "revId": "30ee08c8a606f97252bca6f8ed6c2b0a5cf1ceed",
       "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "eff28ce7_fe0094f6",
+        "filename": "src/main/java/com/criteo/gerrit/plugins/automerge/AtomicityHelper.java",
+        "patchSetId": 5
+      },
+      "lineNbr": 109,
+      "author": {
+        "id": 1029953
+      },
+      "writtenOn": "2017-09-19T18:34:10Z",
+      "side": 1,
+      "message": "See https://gerrit-review.googlesource.com/#/c/plugins/autosubmitter/+/125551/",
+      "parentUuid": "b46846d7_dfeb4935",
+      "range": {
+        "startLine": 109,
+        "startChar": 99,
+        "endLine": 109,
+        "endChar": 110
+      },
+      "revId": "30ee08c8a606f97252bca6f8ed6c2b0a5cf1ceed",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
+      "unresolved": false
     }
   ]
 }
