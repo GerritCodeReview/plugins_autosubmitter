@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "69019e59_1858806a",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 2
+      },
+      "lineNbr": 15,
+      "author": {
+        "id": 1011123
+      },
+      "writtenOn": "2017-09-20T12:33:56Z",
+      "side": 1,
+      "message": "Looks like there\u0027s still a problem with the gerrit version, or with the API that you\u0027re building against.\n\nWhen I build it against the head of master, it loads OK.",
+      "range": {
+        "startLine": 12,
+        "startChar": 2,
+        "endLine": 15,
+        "endChar": 65
+      },
+      "revId": "50b4bda7a03ffefdbbc4cea39bbf4598df986aeb",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
+      "unresolved": false
+    }
+  ]
+}
