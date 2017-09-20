@@ -46,6 +46,30 @@
       "revId": "ad8bce560bcafa68373a18246cfe7ae3989ec4fd",
       "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "7eacfb77_323a9b94",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 17,
+      "author": {
+        "id": 1011123
+      },
+      "writtenOn": "2017-09-20T12:32:10Z",
+      "side": 1,
+      "message": "Please see https://gerrit-review.googlesource.com/?polygerrit\u003d0#/c/plugins/autosubmitter/+/125551/2",
+      "parentUuid": "ad6159ec_056c979e",
+      "range": {
+        "startLine": 16,
+        "startChar": 0,
+        "endLine": 17,
+        "endChar": 43
+      },
+      "revId": "ad8bce560bcafa68373a18246cfe7ae3989ec4fd",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
+      "unresolved": false
     }
   ]
 }
