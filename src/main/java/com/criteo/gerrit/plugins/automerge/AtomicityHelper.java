@@ -12,8 +12,6 @@ import com.google.gerrit.reviewdb.client.Change;
 import com.google.gerrit.reviewdb.client.Project;
 import com.google.gerrit.reviewdb.server.ReviewDb;
 import com.google.gerrit.server.IdentifiedUser;
-import com.google.gerrit.server.account.AccountCache;
-import com.google.gerrit.server.account.Accounts;
 import com.google.gerrit.server.account.Emails;
 import com.google.gerrit.server.change.ChangesCollection;
 import com.google.gerrit.server.change.GetRelated;
@@ -58,10 +56,6 @@ public class AtomicityHelper {
 
   @Inject Provider<PostReview> reviewer;
 
-  @Inject AccountCache accountCache;
-
-  @Inject Accounts accounts;
-
   @Inject Submit submitter;
 
   @Inject Emails emails;
@@ -69,6 +63,8 @@ public class AtomicityHelper {
   @Inject ChangeNotes.Factory changeNotesFactory;
 
   @Inject PermissionBackend permissionBackend;
+
+  @Inject SubmitRuleEvaluator.Factory submitRuleEvaluatorFactory;
 
   /**
    * Check if the current patchset of the specified change has dependent unmerged changes.
@@ -115,7 +111,8 @@ public class AtomicityHelper {
         changeDataFactory.create(db.get(), new Project.NameKey(project), new Change.Id(change));
     // For draft reviews, the patchSet must be set to avoid an NPE.
     final List<SubmitRecord> cansubmit =
-        new SubmitRuleEvaluator(accountCache, accounts, emails, changeData)
+        submitRuleEvaluatorFactory
+            .create(changeData)
             .setPatchSet(changeData.currentPatchSet())
             .evaluate();
     log.debug(String.format("Checking if change %d is submitable.", change));
