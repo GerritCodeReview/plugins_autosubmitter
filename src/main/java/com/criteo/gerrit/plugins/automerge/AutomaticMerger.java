@@ -33,6 +33,7 @@ import com.google.gerrit.server.events.DraftPublishedEvent;
 import com.google.gerrit.server.events.Event;
 import com.google.gerrit.server.events.PatchSetCreatedEvent;
 import com.google.gerrit.server.events.RefUpdatedEvent;
+import com.google.gerrit.server.events.ReviewerDeletedEvent;
 import com.google.gerrit.server.events.TopicChangedEvent;
 import com.google.gerrit.server.git.MergeUtil;
 import com.google.gerrit.server.update.UpdateException;
@@ -91,6 +92,7 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
   synchronized public void onEvent(final Event event) {
     if (event instanceof TopicChangedEvent ||
         event instanceof DraftPublishedEvent ||
+        event instanceof ReviewerDeletedEvent || // A blocking score might be removed when a reviewer is deleted.
         event instanceof PatchSetCreatedEvent) {
       Change change = Change.from(((ChangeEvent)event).change.get());
       onNewOrChangedPatchSet(change);
