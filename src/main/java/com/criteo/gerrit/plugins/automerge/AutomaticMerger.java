@@ -18,8 +18,8 @@ import com.google.common.collect.Lists;
 import com.google.gerrit.common.EventListener;
 import com.google.gerrit.extensions.api.GerritApi;
 import com.google.gerrit.extensions.api.changes.ChangeApi;
-import com.google.gerrit.extensions.common.ChangeInfo;
 import com.google.gerrit.extensions.client.ListChangesOption;
+import com.google.gerrit.extensions.common.ChangeInfo;
 import com.google.gerrit.extensions.events.LifecycleListener;
 import com.google.gerrit.extensions.restapi.RestApiException;
 import com.google.gerrit.reviewdb.server.ReviewDb;
@@ -37,61 +37,44 @@ import com.google.gerrit.server.git.MergeUtil;
 import com.google.gerrit.server.query.change.ChangeData;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-
+import java.util.EnumSet;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.EnumSet;
-import java.util.List;
-
-/**
- * Starts at the same time as the gerrit server, and sets up our change hook
- * listener.
- */
+/** Starts at the same time as the gerrit server, and sets up our change hook listener. */
 public class AutomaticMerger implements EventListener, LifecycleListener {
 
-  private final static Logger log = LoggerFactory.getLogger(AutomaticMerger.class);
+  private static final Logger log = LoggerFactory.getLogger(AutomaticMerger.class);
 
-  @Inject
-  private GerritApi api;
+  @Inject private GerritApi api;
 
-  @Inject
-  private AtomicityHelper atomicityHelper;
+  @Inject private AtomicityHelper atomicityHelper;
 
-  @Inject
-  ChangeData.Factory changeDataFactory;
+  @Inject ChangeData.Factory changeDataFactory;
 
-  @Inject
-  private AutomergeConfig config;
+  @Inject private AutomergeConfig config;
 
-  @Inject
-  Provider<ReviewDb> db;
+  @Inject Provider<ReviewDb> db;
 
-  @Inject
-  GetRelated getRelated;
+  @Inject GetRelated getRelated;
 
-  @Inject
-  MergeUtil.Factory mergeUtilFactory;
+  @Inject MergeUtil.Factory mergeUtilFactory;
 
-  @Inject
-  Provider<PostReview> reviewer;
+  @Inject Provider<PostReview> reviewer;
 
-  @Inject
-  private ReviewUpdater reviewUpdater;
+  @Inject private ReviewUpdater reviewUpdater;
 
-  @Inject
-  Submit submitter;
+  @Inject Submit submitter;
 
   @Override
-  synchronized public void onEvent(final Event event) {
+  public synchronized void onEvent(final Event event) {
     if (event instanceof TopicChangedEvent) {
-      onTopicChanged((TopicChangedEvent)event);
-    }
-    else if (event instanceof PatchSetCreatedEvent) {
-      onPatchSetCreated((PatchSetCreatedEvent)event);
-    }
-    else if (event instanceof CommentAddedEvent) {
-      onCommentAdded((CommentAddedEvent)event);
+      onTopicChanged((TopicChangedEvent) event);
+    } else if (event instanceof PatchSetCreatedEvent) {
+      onPatchSetCreated((PatchSetCreatedEvent) event);
+    } else if (event instanceof CommentAddedEvent) {
+      onCommentAdded((CommentAddedEvent) event);
     }
   }
 
@@ -133,14 +116,16 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
 
   private void autoSubmitIfMergeable(ChangeAttribute change) throws Exception {
     if (atomicityHelper.isSubmittable(change.project, change.number)) {
-      log.info(String.format("Change %d is submittable. Will try to merge all related changes.", change.number));
+      log.info(
+          String.format(
+              "Change %d is submittable. Will try to merge all related changes.", change.number));
       attemptToMerge(change);
     }
   }
 
   /**
-   * Returns true if the plugin must handle this comment, i.e. if we are sure it does not come
-   * from this plugin (to avoid infinite loop).
+   * Returns true if the plugin must handle this comment, i.e. if we are sure it does not come from
+   * this plugin (to avoid infinite loop).
    *
    * @param comment
    * @return a boolean
@@ -165,8 +150,11 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
   private void attemptToMerge(ChangeAttribute change) throws Exception {
     final List<ChangeInfo> related = Lists.newArrayList();
     if (atomicityHelper.isAtomicReview(change)) {
-      related.addAll(api.changes().query("status: open AND topic: " + change.topic)
-          .withOption(ListChangesOption.CURRENT_REVISION).get());
+      related.addAll(
+          api.changes()
+              .query("status: open AND topic: " + change.topic)
+              .withOption(ListChangesOption.CURRENT_REVISION)
+              .get());
     } else {
       ChangeApi changeApi = api.changes().id(change.project, change.branch, change.id);
       related.add(changeApi.get(EnumSet.of(ListChangesOption.CURRENT_REVISION)));
@@ -189,7 +177,8 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
           atomicityHelper.mergeReview(info);
         }
       } else {
-	  reviewUpdater.commentOnReview(change.project, change.number, AutomergeConfig.CANT_MERGE_COMMENT_FILE);
+        reviewUpdater.commentOnReview(
+            change.project, change.number, AutomergeConfig.CANT_MERGE_COMMENT_FILE);
       }
     }
   }
@@ -198,12 +187,16 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
     try {
       checkReviewExists(change.number);
       if (atomicityHelper.hasDependentReview(change.project, change.number)) {
-        log.info(String.format("Warn the user by setting -1 on change %d, as other atomic changes exists on the same repository.",
-            change.number));
-        reviewUpdater.setMinusOne(change.project, change.number, AutomergeConfig.ATOMIC_REVIEWS_SAME_REPO_FILE);
+        log.info(
+            String.format(
+                "Warn the user by setting -1 on change %d, as other atomic changes exists on the same repository.",
+                change.number));
+        reviewUpdater.setMinusOne(
+            change.project, change.number, AutomergeConfig.ATOMIC_REVIEWS_SAME_REPO_FILE);
       } else {
         log.info(String.format("Detected atomic review on change %d.", change.number));
-        reviewUpdater.commentOnReview(change.project, change.number, AutomergeConfig.ATOMIC_REVIEW_DETECTED_FILE);
+        reviewUpdater.commentOnReview(
+            change.project, change.number, AutomergeConfig.ATOMIC_REVIEW_DETECTED_FILE);
       }
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -220,6 +213,5 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
   }
 
   @Override
-  public void stop() {
-  }
+  public void stop() {}
 }

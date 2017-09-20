@@ -21,7 +21,7 @@ import com.google.inject.AbstractModule;
 /**
  * Main automerge Guice module.
  *
- * Configures how all classes in the plugin are instantiated via Guice.
+ * <p>Configures how all classes in the plugin are instantiated via Guice.
  */
 public class AutomergeModule extends AbstractModule {
 
