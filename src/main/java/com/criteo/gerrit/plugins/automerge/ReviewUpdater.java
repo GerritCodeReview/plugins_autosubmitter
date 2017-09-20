@@ -43,7 +43,8 @@ public class ReviewUpdater {
 
   private String getCommentFromFile(final String filename) {
     try {
-      return Files.toString(new File(config.getTemplatesPath(), filename), Charsets.UTF_8);
+      return Files.asCharSource(new File(config.getTemplatesPath(), filename), Charsets.UTF_8)
+          .read();
     } catch (final IOException exc) {
       final String errmsg =
           String.format(
