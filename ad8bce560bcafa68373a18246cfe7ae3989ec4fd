@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8bef81fe_c2597a71",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 17,
+      "author": {
+        "id": 1011123
+      },
+      "writtenOn": "2017-09-20T07:05:00Z",
+      "side": 1,
+      "message": "This indicates that the plugin is running on a version of Gerrit that does not have the Accounts class.  It was added in [1] which is only in master.\n\n[1] https://gerrit-review.googlesource.com/?polygerrit\u003d0#/c/gerrit/+/103436/",
+      "range": {
+        "startLine": 16,
+        "startChar": 0,
+        "endLine": 17,
+        "endChar": 43
+      },
+      "revId": "ad8bce560bcafa68373a18246cfe7ae3989ec4fd",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
+      "unresolved": false
+    }
+  ]
+}
