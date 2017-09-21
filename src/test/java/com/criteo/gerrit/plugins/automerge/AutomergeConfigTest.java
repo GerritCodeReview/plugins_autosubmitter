@@ -4,13 +4,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import com.google.gerrit.server.config.SitePaths;
-
-import org.eclipse.jgit.lib.Config;
-import org.junit.Test;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Paths;
+import org.eclipse.jgit.lib.Config;
+import org.junit.Test;
 
 public class AutomergeConfigTest {
 
@@ -35,8 +33,13 @@ public class AutomergeConfigTest {
     try {
       final SitePaths paths = new SitePaths(Paths.get("."));
 
-      conf.setString(AutomergeConfig.AUTOMERGE_SECTION, null, AutomergeConfig.BOT_EMAIL_KEY, "Foo@bar.com");
-      conf.setString(AutomergeConfig.AUTOMERGE_SECTION, null, AutomergeConfig.TOPIC_PREFIX_KEY, "fake_topic_prefix");
+      conf.setString(
+          AutomergeConfig.AUTOMERGE_SECTION, null, AutomergeConfig.BOT_EMAIL_KEY, "Foo@bar.com");
+      conf.setString(
+          AutomergeConfig.AUTOMERGE_SECTION,
+          null,
+          AutomergeConfig.TOPIC_PREFIX_KEY,
+          "fake_topic_prefix");
 
       final AutomergeConfig amconf = new AutomergeConfig(conf, paths);
       assertEquals(amconf.getBotEmail(), "Foo@bar.com");

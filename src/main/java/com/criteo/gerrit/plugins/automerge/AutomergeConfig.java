@@ -3,26 +3,21 @@ package com.criteo.gerrit.plugins.automerge;
 import com.google.gerrit.server.config.GerritServerConfig;
 import com.google.gerrit.server.config.SitePaths;
 import com.google.inject.Inject;
-
+import java.io.File;
 import org.eclipse.jgit.lib.Config;
 
-import java.io.File;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-
 public class AutomergeConfig {
-  public final static String AUTOMERGE_SECTION = "automerge";
-  public final static String BOT_EMAIL_KEY = "botEmail";
+  public static final String AUTOMERGE_SECTION = "automerge";
+  public static final String BOT_EMAIL_KEY = "botEmail";
 
   public final PluginComment atomicReviewDetected;
   public final PluginComment atomicReviewsSameRepo;
   public final PluginComment cantMergeGitConflict;
   public final PluginComment cantMergeDependsOnNonMerged;
 
-  private final static String defaultBotEmail = "qabot@criteo.com";
-  private final static String defaultTopicPrefix = "crossrepo/";
-  public final static String TOPIC_PREFIX_KEY = "topicPrefix";
+  private static final String defaultBotEmail = "qabot@criteo.com";
+  private static final String defaultTopicPrefix = "crossrepo/";
+  public static final String TOPIC_PREFIX_KEY = "topicPrefix";
 
   public static final String getDefaultBotEmail() {
     return defaultBotEmail;
@@ -49,15 +44,23 @@ public class AutomergeConfig {
 
     templatesPath = paths.etc_dir.toFile();
 
-    atomicReviewDetected = new PluginComment(getCommentPath("atomic_review_detected.txt"),
-        "This review is part of a cross-repository change.\n"
-            + "It will be submitted once all related reviews are submittable.");
-    atomicReviewsSameRepo = new PluginComment(getCommentPath("atomic_review_same_repo.txt"),
-        "This cross-repo review depends on a not merged commit that must be merged first.");
-    cantMergeGitConflict = new PluginComment(getCommentPath("cantmerge_git_conflict.txt"),
-        "This cross-repo review is blocked by a git conflict on change #/c/%d.");
-    cantMergeDependsOnNonMerged = new PluginComment(getCommentPath("cantmerge_depends_on_non_merged.txt"),
-        "This cross-repo review is blocked by a non merged commit below #/c/%d.");
+    atomicReviewDetected =
+        new PluginComment(
+            getCommentPath("atomic_review_detected.txt"),
+            "This review is part of a cross-repository change.\n"
+                + "It will be submitted once all related reviews are submittable.");
+    atomicReviewsSameRepo =
+        new PluginComment(
+            getCommentPath("atomic_review_same_repo.txt"),
+            "This cross-repo review depends on a not merged commit that must be merged first.");
+    cantMergeGitConflict =
+        new PluginComment(
+            getCommentPath("cantmerge_git_conflict.txt"),
+            "This cross-repo review is blocked by a git conflict on change #/c/%d.");
+    cantMergeDependsOnNonMerged =
+        new PluginComment(
+            getCommentPath("cantmerge_depends_on_non_merged.txt"),
+            "This cross-repo review is blocked by a non merged commit below #/c/%d.");
   }
 
   public final String getBotEmail() {

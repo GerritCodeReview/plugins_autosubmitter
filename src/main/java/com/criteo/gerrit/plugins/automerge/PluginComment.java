@@ -7,12 +7,10 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * A comment pushed by the plugin to a Gerrit patchset.
- */
+/** A comment pushed by the plugin to a Gerrit patchset. */
 public class PluginComment {
 
-  private final static Logger log = LoggerFactory.getLogger(PluginComment.class);
+  private static final Logger log = LoggerFactory.getLogger(PluginComment.class);
 
   private final File templatePath;
   private final String defaultMessage;
@@ -24,6 +22,7 @@ public class PluginComment {
 
   /**
    * Returns the comment message, possibly with interpolation placeholders.
+   *
    * @return a string
    */
   String getContent() {
