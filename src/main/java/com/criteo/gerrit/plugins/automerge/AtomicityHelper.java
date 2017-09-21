@@ -4,23 +4,20 @@ import static com.google.gerrit.server.permissions.ChangePermission.READ;
 
 import com.google.gerrit.common.data.SubmitRecord;
 import com.google.gerrit.extensions.api.changes.SubmitInput;
-import com.google.gerrit.extensions.common.ChangeInfo;
+import com.google.gerrit.extensions.client.ChangeStatus;
 import com.google.gerrit.extensions.restapi.AuthException;
 import com.google.gerrit.extensions.restapi.ResourceNotFoundException;
 import com.google.gerrit.reviewdb.client.Account;
-import com.google.gerrit.reviewdb.client.Change;
 import com.google.gerrit.reviewdb.client.Project;
 import com.google.gerrit.reviewdb.server.ReviewDb;
 import com.google.gerrit.server.IdentifiedUser;
 import com.google.gerrit.server.account.Emails;
 import com.google.gerrit.server.change.ChangesCollection;
 import com.google.gerrit.server.change.GetRelated;
+import com.google.gerrit.server.change.GetRelated.ChangeAndCommit;
 import com.google.gerrit.server.change.GetRelated.RelatedInfo;
-import com.google.gerrit.server.change.PostReview;
 import com.google.gerrit.server.change.RevisionResource;
 import com.google.gerrit.server.change.Submit;
-import com.google.gerrit.server.data.ChangeAttribute;
-import com.google.gerrit.server.git.MergeUtil;
 import com.google.gerrit.server.notedb.ChangeNotes;
 import com.google.gerrit.server.permissions.PermissionBackend;
 import com.google.gerrit.server.permissions.PermissionBackendException;
@@ -52,10 +49,6 @@ public class AtomicityHelper {
 
   @Inject GetRelated getRelated;
 
-  @Inject MergeUtil.Factory mergeUtilFactory;
-
-  @Inject Provider<PostReview> reviewer;
-
   @Inject Submit submitter;
 
   @Inject Emails emails;
@@ -81,17 +74,44 @@ public class AtomicityHelper {
     RevisionResource r = getRevisionResource(project, number);
     RelatedInfo related = getRelated.apply(r);
     log.debug(String.format("Checking for related changes on review %d", number));
-    return related.changes.size() > 0;
+
+    String checkedCommitSha1 = r.getPatchSet().getRevision().get();
+    int firstParentIndex = 0;
+    int i = 0;
+    for (ChangeAndCommit c : related.changes) {
+      if (checkedCommitSha1.equals(c.commit.commit)) {
+        firstParentIndex = i + 1;
+        log.debug(
+            String.format(
+                "First parent index on review %d is %d on commit %s",
+                number, firstParentIndex, c.commit.commit));
+        break;
+      }
+      i++;
+    }
+
+    boolean hasNonMergedParent = false;
+    for (ChangeAndCommit c : related.changes.subList(firstParentIndex, related.changes.size())) {
+      if (!ChangeStatus.MERGED.toString().equals(c.status)) {
+        log.info(
+            String.format(
+                "Found non merged parent commit on review %d: %s", number, c.commit.commit));
+        hasNonMergedParent = true;
+        break;
+      }
+    }
+
+    return hasNonMergedParent;
   }
 
   /**
    * Check if a change is an atomic change or not. A change is atomic if it has the atomic topic
    * prefix.
    *
-   * @param change a ChangeAttribute instance
+   * @param change a Change instance
    * @return true or false
    */
-  public boolean isAtomicReview(final ChangeAttribute change) {
+  public boolean isAtomicReview(final Change change) {
     final boolean atomic = change.topic != null && change.topic.startsWith(config.getTopicPrefix());
     log.debug(
         String.format("Checking if change %s is an atomic change: %b", change.number, atomic));
@@ -108,7 +128,10 @@ public class AtomicityHelper {
    */
   public boolean isSubmittable(String project, int change) throws OrmException {
     ChangeData changeData =
-        changeDataFactory.create(db.get(), new Project.NameKey(project), new Change.Id(change));
+        changeDataFactory.create(
+            db.get(),
+            new Project.NameKey(project),
+            new com.google.gerrit.reviewdb.client.Change.Id(change));
     // For draft reviews, the patchSet must be set to avoid an NPE.
     final List<SubmitRecord> cansubmit =
         submitRuleEvaluatorFactory
@@ -126,18 +149,15 @@ public class AtomicityHelper {
     return true;
   }
 
-  /**
-   * Merge a review.
-   *
-   * @param info
-   */
-  public void mergeReview(ChangeInfo info) throws Exception {
-    submitter.apply(getRevisionResource(info.project, info._number), new SubmitInput());
+  /** Merge a review. */
+  public void mergeReview(String project, int number) throws Exception {
+    submitter.apply(getRevisionResource(project, number), new SubmitInput());
   }
 
   public RevisionResource getRevisionResource(String project, int changeNumber)
-      throws NoSuchChangeException, OrmException {
-    Change.Id changeId = new Change.Id(changeNumber);
+      throws OrmException {
+    com.google.gerrit.reviewdb.client.Change.Id changeId =
+        new com.google.gerrit.reviewdb.client.Change.Id(changeNumber);
     ChangeNotes notes = changeNotesFactory.createChecked(changeId);
     try {
       permissionBackend.user(getBotUser()).change(notes).database(db).check(READ);

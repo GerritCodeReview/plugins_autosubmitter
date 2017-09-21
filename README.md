@@ -12,3 +12,14 @@ in different gerrit repositories. They will be merged at the same time,
 when all approvals for all reviews are present, and all reviews are mergeable.
 
 Requires Gerrit 2.14 or later.
+
+Configuration
+-------------
+
+```
+[automerge]
+        botEmail=admin@example.com
+[commentlink "change"]
+        match = "#/c/(\\d+)"
+        html = "<a href=\"/#/c/$1/\">$1</a>"
+```
