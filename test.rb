@@ -14,11 +14,12 @@ require 'open3'
 PROJECTS_DIR="~/"
 PROJECT1="project1"
 PROJECT2="project2"
+USER="admin"
 
 class TestAutomerge < MiniTest::Test
   HOST = "0.0.0.0"
   PORT = 29418
-  GERRIT_SSH = "ssh -p #{PORT} #{HOST}"
+  GERRIT_SSH = "ssh -l #{USER} -p #{PORT} #{HOST}"
 
   def setup
     clean_local_repo(PROJECT1)
@@ -48,8 +49,8 @@ class TestAutomerge < MiniTest::Test
   def test_crossrepo_topic_1_repo_over_not_merged_commit
     commit0 = create_review(PROJECT1, "review0 on #{PROJECT1}")
     commit0b = create_review(PROJECT1, "review0b on #{PROJECT1}", "crossrepo/topic1")
-    check_label(commit0b, "Code-Review", "-1")
-    check_last_message_contains(commit0b, "atomic_review_same_repo.txt")
+
+    check_last_message_contains(commit0b, "This cross-repo review depends on a not merged commit")
   end
 
   def test_normal_topic_2_repos
@@ -68,9 +69,88 @@ class TestAutomerge < MiniTest::Test
     approve_review(commit1)
     check_status(commit1, 'NEW')
     check_status(commit2, 'NEW')
+
     approve_review(commit2)
+
     check_status(commit1, 'MERGED')
     check_status(commit2, 'MERGED')
+  end
+
+  def test_crossrepo_topic_2_repos_above_non_mergeable_commit
+    commit1a = create_review(PROJECT1, "review1a on #{PROJECT1}")
+    commit1b = create_review(PROJECT1, "review1b on #{PROJECT1}", "crossrepo/topic2")
+    commit2 = create_review(PROJECT2, "review2 on #{PROJECT2}", "crossrepo/topic2")
+    approve_review(commit1b)
+    check_status(commit1a, 'NEW')
+    check_status(commit1b, 'NEW')
+    check_status(commit2, 'NEW')
+
+    approve_review(commit2)
+
+    check_last_message_contains(commit2, "blocked by a non merged commit below")
+    check_status(commit1a, 'NEW')
+    check_status(commit1b, 'NEW')
+    check_status(commit2, 'NEW')
+  end
+
+ def test_crossrepo_topic_2_repos_below_not_merged_commit
+    commit1 = create_review(PROJECT1, "review1 on #{PROJECT1}", "crossrepo/topic2")
+    commit1b = create_review(PROJECT1, "review1b on #{PROJECT1}")
+    commit2 = create_review(PROJECT2, "review2 on #{PROJECT2}", "crossrepo/topic2")
+    approve_review(commit1)
+    check_status(commit1, 'NEW')
+    check_status(commit2, 'NEW')
+
+    approve_review(commit2)
+
+    check_status(commit1, 'MERGED')
+    check_status(commit2, 'MERGED')
+  end
+
+  def test_refupdatedevent_merge_upper_commit
+    commit1a = create_review(PROJECT1, "review1a on #{PROJECT1}")
+    commit1b = create_review(PROJECT1, "review1b on #{PROJECT1}")
+    approve_review(commit1b)
+    check_status(commit1a, 'NEW')
+    check_status(commit1b, 'NEW')
+
+    approve_review(commit1a)
+
+    check_status(commit1a, 'MERGED')
+    check_status(commit1b, 'MERGED')
+  end
+
+ def test_refupdatedevent_merge_upper_crossrepo
+    commit1a = create_review(PROJECT1, "review1a on #{PROJECT1}")
+    commit1b = create_review(PROJECT1, "review1b on #{PROJECT1}", "crossrepo/topic2")
+    commit2 = create_review(PROJECT2, "review2 on #{PROJECT2}", "crossrepo/topic2")
+    approve_review(commit1b)
+    approve_review(commit2)
+    check_status(commit1a, 'NEW')
+    check_status(commit1b, 'NEW')
+    check_status(commit2, 'NEW')
+
+    approve_review(commit1a)
+
+    check_status(commit1a, 'MERGED')
+    check_status(commit1b, 'MERGED')
+    check_status(commit2, 'MERGED')
+  end
+
+  def test_refupdatedevent_does_not_merge_non_mergeable_upper_crossrepo
+    commit1a = create_review(PROJECT1, "review1a on #{PROJECT1}")
+    commit1b = create_review(PROJECT1, "review1b on #{PROJECT1}", "crossrepo/topic2")
+    commit2 = create_review(PROJECT2, "review2 on #{PROJECT2}", "crossrepo/topic2")
+    approve_review(commit1b)
+    check_status(commit1a, 'NEW')
+    check_status(commit1b, 'NEW')
+    check_status(commit2, 'NEW')
+
+    approve_review(commit1a)
+
+    check_status(commit1a, 'MERGED')
+    check_status(commit1b, 'NEW')
+    check_status(commit2, 'NEW')
   end
 
   def test_two_reviews_with_same_changed_id
@@ -83,6 +163,16 @@ class TestAutomerge < MiniTest::Test
     approve_review(commit2)
 
     check_status(commit2, 'MERGED')
+  end
+
+  def test_published_draft_is_autosubmitted
+    commit_id = create_review(PROJECT1, "review0 on #{PROJECT1}", draft: true)
+    approve_review(commit_id)
+    check_status(commit_id, 'DRAFT')
+
+    publish_draft(commit_id)
+
+    check_status(commit_id, 'MERGED')
   end
 
   private
@@ -101,7 +191,11 @@ class TestAutomerge < MiniTest::Test
     reviews = gerrit_query(query)
     reviews.each do |review|
       review_number = review['number']
-      execute("#{GERRIT_SSH} gerrit review --abandon #{review_number},1")
+      if review['status'] == 'DRAFT'
+        execute("#{GERRIT_SSH} gerrit review --delete #{review_number},1")
+      else
+        execute("#{GERRIT_SSH} gerrit review --abandon #{review_number},1")
+      end
     end
   end
 
@@ -113,14 +207,14 @@ class TestAutomerge < MiniTest::Test
     change_id
   end
 
-  def create_review(project_name, message, topic = nil, change_id = nil)
+  def create_review(project_name, message, topic = nil, change_id = nil, draft: false)
     topic_suffix = "/#{topic}" if topic
     message = "#{message}\n\nChange-Id: #{change_id}" if change_id
     execute(["cd #{project_dir(project_name)}",
              "echo 0 >> a",
              "git add .",
              %Q(git commit -m "#{message}"),
-             "git push origin HEAD:refs/for/master#{topic_suffix}"
+             "git push origin HEAD:refs/#{draft ? 'drafts' : 'for'}/master#{topic_suffix}"
             ].join(" && "))
     commit_id = execute("cd #{project_dir(project_name)} && git rev-parse HEAD")
     refute(commit_id.empty?, "missing commit-id")
@@ -129,6 +223,10 @@ class TestAutomerge < MiniTest::Test
 
   def approve_review(commit_id)
     execute("#{GERRIT_SSH} gerrit review --verified 1 --code-review 2 #{commit_id}")
+  end
+
+  def publish_draft(commit_id)
+    execute("#{GERRIT_SSH} gerrit review --publish #{commit_id}")
   end
 
   def abandon_review(commit_id)
