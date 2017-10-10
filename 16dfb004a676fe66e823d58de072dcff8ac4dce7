@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "13d3e2d5_1b339dbb",
+        "filename": "src/main/java/com/criteo/gerrit/plugins/automerge/AutomaticMerger.java",
+        "patchSetId": 3
+      },
+      "lineNbr": 76,
+      "author": {
+        "id": 1019939
+      },
+      "writtenOn": "2017-10-10T13:59:44Z",
+      "side": 0,
+      "message": "Should we just remove it?\n\nIf a reviewer review an WIP change (I am not sure if this is right thing to do, but as i can see in 2.15-rc0, we do can do this), then owner set it to ready, should this plugin auto submit the change?",
+      "revId": "16dfb004a676fe66e823d58de072dcff8ac4dce7",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
+      "unresolved": false
+    }
+  ]
+}
