@@ -16,6 +16,24 @@
       "revId": "16dfb004a676fe66e823d58de072dcff8ac4dce7",
       "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "fbfa8d17_d8c1548f",
+        "filename": "src/main/java/com/criteo/gerrit/plugins/automerge/AutomaticMerger.java",
+        "patchSetId": 3
+      },
+      "lineNbr": 76,
+      "author": {
+        "id": 1029953
+      },
+      "writtenOn": "2017-10-10T14:03:10Z",
+      "side": 0,
+      "message": "Hmm, not sure. This is just removing drafts to allow users to at least use this plugin again :).",
+      "parentUuid": "13d3e2d5_1b339dbb",
+      "revId": "16dfb004a676fe66e823d58de072dcff8ac4dce7",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
+      "unresolved": false
     }
   ]
 }
