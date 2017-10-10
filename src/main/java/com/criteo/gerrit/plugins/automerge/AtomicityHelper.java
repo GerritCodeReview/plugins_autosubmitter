@@ -10,6 +10,7 @@ import com.google.gerrit.extensions.restapi.ResourceNotFoundException;
 import com.google.gerrit.reviewdb.client.Account;
 import com.google.gerrit.reviewdb.client.Project;
 import com.google.gerrit.reviewdb.server.ReviewDb;
+import com.google.gerrit.server.CurrentUser;
 import com.google.gerrit.server.IdentifiedUser;
 import com.google.gerrit.server.account.Emails;
 import com.google.gerrit.server.change.ChangesCollection;
@@ -22,6 +23,7 @@ import com.google.gerrit.server.notedb.ChangeNotes;
 import com.google.gerrit.server.permissions.PermissionBackend;
 import com.google.gerrit.server.permissions.PermissionBackendException;
 import com.google.gerrit.server.project.NoSuchChangeException;
+import com.google.gerrit.server.project.NoSuchProjectException;
 import com.google.gerrit.server.project.SubmitRuleEvaluator;
 import com.google.gerrit.server.query.change.ChangeData;
 import com.google.gwtorm.server.OrmException;
@@ -59,6 +61,8 @@ public class AtomicityHelper {
 
   @Inject SubmitRuleEvaluator.Factory submitRuleEvaluatorFactory;
 
+  @Inject private CurrentUser user;
+
   /**
    * Check if the current patchset of the specified change has dependent unmerged changes.
    *
@@ -70,7 +74,8 @@ public class AtomicityHelper {
    * @throws OrmException
    */
   public boolean hasDependentReview(String project, int number)
-      throws IOException, NoSuchChangeException, OrmException {
+      throws IOException, NoSuchChangeException, NoSuchProjectException, OrmException,
+      PermissionBackendException {
     RevisionResource r = getRevisionResource(project, number);
     RelatedInfo related = getRelated.apply(r);
     log.debug(String.format("Checking for related changes on review %d", number));
@@ -135,7 +140,7 @@ public class AtomicityHelper {
     // For draft reviews, the patchSet must be set to avoid an NPE.
     final List<SubmitRecord> cansubmit =
         submitRuleEvaluatorFactory
-            .create(changeData)
+            .create(user, changeData)
             .setPatchSet(changeData.currentPatchSet())
             .evaluate();
     log.debug(String.format("Checking if change %d is submitable.", change));
