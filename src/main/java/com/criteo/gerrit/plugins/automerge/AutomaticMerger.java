@@ -30,7 +30,6 @@ import com.google.gerrit.server.data.AccountAttribute;
 import com.google.gerrit.server.data.ChangeAttribute;
 import com.google.gerrit.server.events.ChangeEvent;
 import com.google.gerrit.server.events.CommentAddedEvent;
-import com.google.gerrit.server.events.DraftPublishedEvent;
 import com.google.gerrit.server.events.Event;
 import com.google.gerrit.server.events.PatchSetCreatedEvent;
 import com.google.gerrit.server.events.RefUpdatedEvent;
@@ -73,7 +72,6 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
   @Override
   public synchronized void onEvent(final Event event) {
     if (event instanceof TopicChangedEvent
-        || event instanceof DraftPublishedEvent
         || event instanceof ReviewerDeletedEvent
         || // A blocking score might be removed when a reviewer is deleted.
         event instanceof PatchSetCreatedEvent) {
