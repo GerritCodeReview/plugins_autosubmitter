@@ -160,8 +160,7 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
       if (atomicityHelper.isAtomicReview(change)) {
         attemptToMergeAtomic(change);
       } else {
-        log.info("Submitting non-atomic change {}...", change.number);
-        atomicityHelper.mergeReview(change.project, change.number);
+        attemptToMergeNonAtomic(change);
       }
     }
   }
@@ -223,6 +222,24 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
     for (final ChangeInfo info : related) {
       atomicityHelper.mergeReview(info.project, info._number);
     }
+  }
+
+  private void attemptToMergeNonAtomic(Change change)
+      throws IOException, OrmException, RestApiException {
+    // There may be a parent commit that it not merged while having all approvals
+    // because it is part of a cross-repo. We take care to not let Gerrit merge it
+    // by merging only the commits whose parents are already merged.
+    boolean dependsOnNonMergedCommit =
+        atomicityHelper.hasDependentReview(change.project, change.number);
+    if (dependsOnNonMergedCommit) {
+      log.info(
+          "Change {} is not mergeable because it depends on a non merged commit.",
+          change.number);
+      return;
+    }
+
+    log.info("Submitting non-atomic change {}...", change.number);
+    atomicityHelper.mergeReview(change.project, change.number);
   }
 
   private void processNewAtomicPatchSet(Change change) {
