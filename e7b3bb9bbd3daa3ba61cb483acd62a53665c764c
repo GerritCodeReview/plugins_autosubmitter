@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b7acc543_b0ac21d5",
+        "filename": "src/main/java/com/criteo/gerrit/plugins/automerge/AtomicityHelper.java",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1011123
+      },
+      "writtenOn": "2018-04-10T14:20:20Z",
+      "side": 1,
+      "message": "Are the changes in this file related to removal of draft support?",
+      "revId": "e7b3bb9bbd3daa3ba61cb483acd62a53665c764c",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c15b5fa7_e5ddbffd",
+        "filename": "src/main/java/com/criteo/gerrit/plugins/automerge/AtomicityHelper.java",
+        "patchSetId": 4
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 1011123
+      },
+      "writtenOn": "2018-04-10T14:20:20Z",
+      "side": 1,
+      "message": "New exception should be documented, but see the comment above first.",
+      "revId": "e7b3bb9bbd3daa3ba61cb483acd62a53665c764c",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
+      "unresolved": true
+    }
+  ]
+}
