@@ -37,6 +37,24 @@
     },
     {
       "key": {
+        "uuid": "693e8bca_0d2750fa",
+        "filename": "src/main/java/com/criteo/gerrit/plugins/automerge/AtomicityHelper.java",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1011123
+      },
+      "writtenOn": "2018-04-25T07:14:06Z",
+      "side": 1,
+      "message": "The changes are needed to make the plugin build against 2.15, but this is unrelated to removal of support for drafts.\n\nI\u0027ll push a new PS with updated commit message.",
+      "parentUuid": "bbb26804_562a1805",
+      "revId": "e7b3bb9bbd3daa3ba61cb483acd62a53665c764c",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "c15b5fa7_e5ddbffd",
         "filename": "src/main/java/com/criteo/gerrit/plugins/automerge/AtomicityHelper.java",
         "patchSetId": 4
