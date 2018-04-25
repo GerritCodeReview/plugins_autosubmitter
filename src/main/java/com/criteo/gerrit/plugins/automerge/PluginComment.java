@@ -28,7 +28,7 @@ public class PluginComment {
   String getContent() {
     if (templatePath.exists()) {
       try {
-        return Files.toString(templatePath, Charsets.UTF_8);
+        return Files.asCharSource(templatePath, Charsets.UTF_8).read();
       } catch (final IOException exc) {
         log.error("Not able to read " + templatePath, exc);
       }
