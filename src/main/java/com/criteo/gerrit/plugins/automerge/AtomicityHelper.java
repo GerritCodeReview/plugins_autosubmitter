@@ -75,8 +75,8 @@ public class AtomicityHelper {
    * @throws PermissionBackendException
    */
   public boolean hasDependentReview(String project, int number)
-      throws RestApiException, IOException, NoSuchChangeException, NoSuchProjectException, OrmException,
-          PermissionBackendException {
+      throws RestApiException, IOException, NoSuchChangeException, NoSuchProjectException,
+          OrmException, PermissionBackendException {
     RevisionResource r = getRevisionResource(project, number);
     RelatedInfo related = getRelated.apply(r);
     log.debug(String.format("Checking for related changes on review %d", number));
@@ -140,9 +140,7 @@ public class AtomicityHelper {
             new com.google.gerrit.reviewdb.client.Change.Id(change));
     // For draft reviews, the patchSet must be set to avoid an NPE.
     final List<SubmitRecord> cansubmit =
-        submitRuleEvaluatorFactory
-            .create(SubmitRuleOptions.defaults())
-            .evaluate(changeData);
+        submitRuleEvaluatorFactory.create(SubmitRuleOptions.defaults()).evaluate(changeData);
     log.debug(String.format("Checking if change %d is submitable.", change));
     for (SubmitRecord submit : cansubmit) {
       if (submit.status != SubmitRecord.Status.OK) {
