@@ -13,3 +13,8 @@ hs_err_pid*
 
 # Bazel generated files
 /bazel-*
+
+# Eclipse generated files
+.classpath
+.project
+/eclipse-out
