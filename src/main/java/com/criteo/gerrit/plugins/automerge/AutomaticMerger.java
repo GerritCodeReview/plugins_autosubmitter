@@ -233,8 +233,7 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
         atomicityHelper.hasDependentReview(change.project, change.number);
     if (dependsOnNonMergedCommit) {
       log.info(
-          "Change {} is not mergeable because it depends on a non merged commit.",
-          change.number);
+          "Change {} is not mergeable because it depends on a non merged commit.", change.number);
       return;
     }
 
