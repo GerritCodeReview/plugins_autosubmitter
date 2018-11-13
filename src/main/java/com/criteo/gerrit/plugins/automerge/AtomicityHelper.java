@@ -7,24 +7,26 @@ import com.google.gerrit.extensions.api.changes.SubmitInput;
 import com.google.gerrit.extensions.client.ChangeStatus;
 import com.google.gerrit.extensions.restapi.AuthException;
 import com.google.gerrit.extensions.restapi.ResourceNotFoundException;
+import com.google.gerrit.extensions.restapi.RestApiException;
 import com.google.gerrit.reviewdb.client.Account;
 import com.google.gerrit.reviewdb.client.Project;
 import com.google.gerrit.reviewdb.server.ReviewDb;
 import com.google.gerrit.server.IdentifiedUser;
 import com.google.gerrit.server.account.Emails;
-import com.google.gerrit.server.change.ChangesCollection;
-import com.google.gerrit.server.change.GetRelated;
-import com.google.gerrit.server.change.GetRelated.ChangeAndCommit;
-import com.google.gerrit.server.change.GetRelated.RelatedInfo;
 import com.google.gerrit.server.change.RevisionResource;
-import com.google.gerrit.server.change.Submit;
 import com.google.gerrit.server.notedb.ChangeNotes;
 import com.google.gerrit.server.permissions.PermissionBackend;
 import com.google.gerrit.server.permissions.PermissionBackendException;
 import com.google.gerrit.server.project.NoSuchChangeException;
 import com.google.gerrit.server.project.NoSuchProjectException;
 import com.google.gerrit.server.project.SubmitRuleEvaluator;
+import com.google.gerrit.server.project.SubmitRuleOptions;
 import com.google.gerrit.server.query.change.ChangeData;
+import com.google.gerrit.server.restapi.change.ChangesCollection;
+import com.google.gerrit.server.restapi.change.GetRelated;
+import com.google.gerrit.server.restapi.change.GetRelated.ChangeAndCommit;
+import com.google.gerrit.server.restapi.change.GetRelated.RelatedInfo;
+import com.google.gerrit.server.restapi.change.Submit;
 import com.google.gwtorm.server.OrmException;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -73,7 +75,7 @@ public class AtomicityHelper {
    * @throws PermissionBackendException
    */
   public boolean hasDependentReview(String project, int number)
-      throws IOException, NoSuchChangeException, NoSuchProjectException, OrmException,
+      throws RestApiException, IOException, NoSuchChangeException, NoSuchProjectException, OrmException,
           PermissionBackendException {
     RevisionResource r = getRevisionResource(project, number);
     RelatedInfo related = getRelated.apply(r);
@@ -139,9 +141,8 @@ public class AtomicityHelper {
     // For draft reviews, the patchSet must be set to avoid an NPE.
     final List<SubmitRecord> cansubmit =
         submitRuleEvaluatorFactory
-            .create(getBotUser(), changeData)
-            .setPatchSet(changeData.currentPatchSet())
-            .evaluate();
+            .create(SubmitRuleOptions.defaults())
+            .evaluate(changeData);
     log.debug(String.format("Checking if change %d is submitable.", change));
     for (SubmitRecord submit : cansubmit) {
       if (submit.status != SubmitRecord.Status.OK) {
@@ -159,7 +160,7 @@ public class AtomicityHelper {
   }
 
   public RevisionResource getRevisionResource(String project, int changeNumber)
-      throws OrmException {
+      throws RestApiException, OrmException, IOException {
     com.google.gerrit.reviewdb.client.Change.Id changeId =
         new com.google.gerrit.reviewdb.client.Change.Id(changeNumber);
     ChangeNotes notes = changeNotesFactory.createChecked(changeId);

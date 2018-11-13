@@ -1,8 +1,8 @@
 package com.criteo.gerrit.plugins.automerge;
 
 import com.google.gerrit.extensions.api.changes.ReviewInput;
-import com.google.gerrit.server.change.PostReview;
 import com.google.gerrit.server.change.RevisionResource;
+import com.google.gerrit.server.restapi.change.PostReview;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
