@@ -3,6 +3,8 @@ package com.criteo.gerrit.plugins.automerge;
 import static com.google.gerrit.server.permissions.ChangePermission.READ;
 
 import com.google.gerrit.common.data.SubmitRecord;
+import com.google.gerrit.extensions.api.changes.RelatedChangeAndCommitInfo;
+import com.google.gerrit.extensions.api.changes.RelatedChangesInfo;
 import com.google.gerrit.extensions.api.changes.SubmitInput;
 import com.google.gerrit.extensions.client.ChangeStatus;
 import com.google.gerrit.extensions.restapi.AuthException;
@@ -24,8 +26,6 @@ import com.google.gerrit.server.project.SubmitRuleOptions;
 import com.google.gerrit.server.query.change.ChangeData;
 import com.google.gerrit.server.restapi.change.ChangesCollection;
 import com.google.gerrit.server.restapi.change.GetRelated;
-import com.google.gerrit.server.restapi.change.GetRelated.ChangeAndCommit;
-import com.google.gerrit.server.restapi.change.GetRelated.RelatedInfo;
 import com.google.gerrit.server.restapi.change.Submit;
 import com.google.gwtorm.server.OrmException;
 import com.google.inject.Inject;
@@ -78,13 +78,13 @@ public class AtomicityHelper {
       throws RestApiException, IOException, NoSuchChangeException, NoSuchProjectException,
           OrmException, PermissionBackendException {
     RevisionResource r = getRevisionResource(project, number);
-    RelatedInfo related = getRelated.apply(r);
+    RelatedChangesInfo related = getRelated.apply(r);
     log.debug(String.format("Checking for related changes on review %d", number));
 
     String checkedCommitSha1 = r.getPatchSet().getRevision().get();
     int firstParentIndex = 0;
     int i = 0;
-    for (ChangeAndCommit c : related.changes) {
+    for (RelatedChangeAndCommitInfo c : related.changes) {
       if (checkedCommitSha1.equals(c.commit.commit)) {
         firstParentIndex = i + 1;
         log.debug(
@@ -97,7 +97,8 @@ public class AtomicityHelper {
     }
 
     boolean hasNonMergedParent = false;
-    for (ChangeAndCommit c : related.changes.subList(firstParentIndex, related.changes.size())) {
+    for (RelatedChangeAndCommitInfo c :
+        related.changes.subList(firstParentIndex, related.changes.size())) {
       if (!ChangeStatus.MERGED.toString().equals(c.status)) {
         log.info(
             String.format(
