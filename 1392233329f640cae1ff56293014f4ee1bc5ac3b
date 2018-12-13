@@ -22,6 +22,30 @@
       "revId": "1392233329f640cae1ff56293014f4ee1bc5ac3b",
       "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b0acf258_e4ea67c0",
+        "filename": "src/main/java/com/criteo/gerrit/plugins/automerge/AtomicityHelper.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 163,
+      "author": {
+        "id": 1006192
+      },
+      "writtenOn": "2018-12-13T12:35:02Z",
+      "side": 1,
+      "message": "Problem traced as https://bugs.chromium.org/p/gerrit/issues/detail?id\u003d10173",
+      "parentUuid": "78fd703f_efb84b3b",
+      "range": {
+        "startLine": 163,
+        "startChar": 0,
+        "endLine": 163,
+        "endChar": 106
+      },
+      "revId": "1392233329f640cae1ff56293014f4ee1bc5ac3b",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
+      "unresolved": true
     }
   ]
 }
