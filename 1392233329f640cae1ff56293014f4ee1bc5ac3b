@@ -46,6 +46,30 @@
       "revId": "1392233329f640cae1ff56293014f4ee1bc5ac3b",
       "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5455ca83_617f8970",
+        "filename": "src/main/java/com/criteo/gerrit/plugins/automerge/AtomicityHelper.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 163,
+      "author": {
+        "id": 1011123
+      },
+      "writtenOn": "2018-12-13T12:39:05Z",
+      "side": 1,
+      "message": "It\u0027s passed into the permissionbackend at L158, but yes, it looks like it was also supposed to be in the resource.",
+      "parentUuid": "b0acf258_e4ea67c0",
+      "range": {
+        "startLine": 163,
+        "startChar": 0,
+        "endLine": 163,
+        "endChar": 106
+      },
+      "revId": "1392233329f640cae1ff56293014f4ee1bc5ac3b",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
+      "unresolved": true
     }
   ]
 }
