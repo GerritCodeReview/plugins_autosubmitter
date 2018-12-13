@@ -70,6 +70,30 @@
       "revId": "1392233329f640cae1ff56293014f4ee1bc5ac3b",
       "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f1f8c3ca_f284cbdd",
+        "filename": "src/main/java/com/criteo/gerrit/plugins/automerge/AtomicityHelper.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 163,
+      "author": {
+        "id": 1006192
+      },
+      "writtenOn": "2018-12-13T12:42:40Z",
+      "side": 1,
+      "message": "Yes, it is used for checking but not for submitting the change.\nThat is the problem.\n\nWhat happens is that at submit time, the current user is checked against submit permissions and is used for the real submit operation, instead of the bot user.\n\nWith this fix, it actually works fine. Without it, I get a permission error at submit time and, if I grant that permission, the change gets submitted as the current user and not the bot user.",
+      "parentUuid": "5455ca83_617f8970",
+      "range": {
+        "startLine": 163,
+        "startChar": 0,
+        "endLine": 163,
+        "endChar": 106
+      },
+      "revId": "1392233329f640cae1ff56293014f4ee1bc5ac3b",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
+      "unresolved": true
     }
   ]
 }
