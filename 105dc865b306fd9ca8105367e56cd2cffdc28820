@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "d6d6840d_28a7e211",
+        "filename": "src/test/java/com/criteo/gerrit/plugins/automerge/AutomaticMergerTest.java",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1006192
+      },
+      "writtenOn": "2018-12-30T00:38:55Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "6a976519_4e05e4d3",
+      "revId": "105dc865b306fd9ca8105367e56cd2cffdc28820",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "6770ff49_35323e9d",
         "filename": "src/test/java/com/criteo/gerrit/plugins/automerge/AutomaticMergerTest.java",
         "patchSetId": 5
@@ -42,6 +60,30 @@
     },
     {
       "key": {
+        "uuid": "03f4bbb5_dc0c2f2b",
+        "filename": "src/test/java/com/criteo/gerrit/plugins/automerge/AutomaticMergerTest.java",
+        "patchSetId": 5
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 1006192
+      },
+      "writtenOn": "2018-12-30T00:38:55Z",
+      "side": 1,
+      "message": "One test should have one purpose and should fail for one reason.\nThe two tests are very different in their intent, even if they have some part in common. The test name should describe what is the intended behaviour that they are willing to verify.",
+      "parentUuid": "6770ff49_35323e9d",
+      "range": {
+        "startLine": 54,
+        "startChar": 2,
+        "endLine": 75,
+        "endChar": 0
+      },
+      "revId": "105dc865b306fd9ca8105367e56cd2cffdc28820",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "99b2b947_86345ab7",
         "filename": "src/test/java/com/criteo/gerrit/plugins/automerge/AutomaticMergerTest.java",
         "patchSetId": 5
@@ -62,6 +104,30 @@
       "revId": "105dc865b306fd9ca8105367e56cd2cffdc28820",
       "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4dda1261_2692304f",
+        "filename": "src/test/java/com/criteo/gerrit/plugins/automerge/AutomaticMergerTest.java",
+        "patchSetId": 5
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 1006192
+      },
+      "writtenOn": "2018-12-30T00:38:55Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "99b2b947_86345ab7",
+      "range": {
+        "startLine": 93,
+        "startChar": 4,
+        "endLine": 93,
+        "endChar": 75
+      },
+      "revId": "105dc865b306fd9ca8105367e56cd2cffdc28820",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
+      "unresolved": false
     }
   ]
 }
