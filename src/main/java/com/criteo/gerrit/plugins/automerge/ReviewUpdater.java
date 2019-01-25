@@ -1,14 +1,10 @@
 package com.criteo.gerrit.plugins.automerge;
 
 import com.google.gerrit.extensions.api.changes.ReviewInput;
-import com.google.gerrit.extensions.restapi.RestApiException;
-import com.google.gerrit.server.change.PostReview;
 import com.google.gerrit.server.change.RevisionResource;
-import com.google.gerrit.server.update.UpdateException;
-import com.google.gwtorm.server.OrmException;
+import com.google.gerrit.server.restapi.change.PostReview;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import java.io.IOException;
 
 public class ReviewUpdater {
   /**
@@ -22,8 +18,7 @@ public class ReviewUpdater {
 
   @Inject private AtomicityHelper atomicityHelper;
 
-  public void commentOnReview(String project, int number, String comment)
-      throws RestApiException, OrmException, IOException, UpdateException {
+  public void commentOnReview(String project, int number, String comment) throws Exception {
     ReviewInput reviewInput = createComment(comment);
     applyComment(project, number, reviewInput);
   }
@@ -32,8 +27,7 @@ public class ReviewUpdater {
     return new ReviewInput().message(commentsPrefix + comment);
   }
 
-  private void applyComment(String project, int number, ReviewInput comment)
-      throws RestApiException, OrmException, IOException, UpdateException {
+  private void applyComment(String project, int number, ReviewInput comment) throws Exception {
     RevisionResource r = atomicityHelper.getRevisionResource(project, number);
     reviewer.get().apply(r, comment);
   }

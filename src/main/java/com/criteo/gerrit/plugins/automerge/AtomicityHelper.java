@@ -1,26 +1,30 @@
 package com.criteo.gerrit.plugins.automerge;
 
+import static com.google.gerrit.server.permissions.ChangePermission.READ;
+
 import com.google.gerrit.common.data.SubmitRecord;
+import com.google.gerrit.extensions.api.changes.RelatedChangeAndCommitInfo;
+import com.google.gerrit.extensions.api.changes.RelatedChangesInfo;
 import com.google.gerrit.extensions.api.changes.SubmitInput;
 import com.google.gerrit.extensions.client.ChangeStatus;
-import com.google.gerrit.extensions.restapi.RestApiException;
+import com.google.gerrit.extensions.restapi.AuthException;
 import com.google.gerrit.reviewdb.client.Account;
 import com.google.gerrit.reviewdb.client.Project;
 import com.google.gerrit.reviewdb.server.ReviewDb;
 import com.google.gerrit.server.IdentifiedUser;
-import com.google.gerrit.server.account.AccountByEmailCache;
-import com.google.gerrit.server.change.ChangesCollection;
-import com.google.gerrit.server.change.GetRelated;
-import com.google.gerrit.server.change.GetRelated.ChangeAndCommit;
-import com.google.gerrit.server.change.GetRelated.RelatedInfo;
-import com.google.gerrit.server.change.PostReview;
+import com.google.gerrit.server.account.Emails;
+import com.google.gerrit.server.change.ChangeResource;
 import com.google.gerrit.server.change.RevisionResource;
-import com.google.gerrit.server.change.Submit;
-import com.google.gerrit.server.git.MergeUtil;
-import com.google.gerrit.server.project.ChangeControl;
+import com.google.gerrit.server.notedb.ChangeNotes;
+import com.google.gerrit.server.permissions.PermissionBackend;
+import com.google.gerrit.server.permissions.PermissionBackendException;
 import com.google.gerrit.server.project.NoSuchChangeException;
+import com.google.gerrit.server.project.NoSuchProjectException;
 import com.google.gerrit.server.project.SubmitRuleEvaluator;
+import com.google.gerrit.server.project.SubmitRuleOptions;
 import com.google.gerrit.server.query.change.ChangeData;
+import com.google.gerrit.server.restapi.change.GetRelated;
+import com.google.gerrit.server.restapi.change.Submit;
 import com.google.gwtorm.server.OrmException;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -34,13 +38,7 @@ public class AtomicityHelper {
 
   private static final Logger log = LoggerFactory.getLogger(AtomicityHelper.class);
 
-  @Inject private AccountByEmailCache byEmailCache;
-
   @Inject ChangeData.Factory changeDataFactory;
-
-  @Inject private ChangeControl.GenericFactory changeFactory;
-
-  @Inject private ChangesCollection collection;
 
   @Inject AutomergeConfig config;
 
@@ -50,11 +48,17 @@ public class AtomicityHelper {
 
   @Inject GetRelated getRelated;
 
-  @Inject MergeUtil.Factory mergeUtilFactory;
-
-  @Inject Provider<PostReview> reviewer;
-
   @Inject Submit submitter;
+
+  @Inject Emails emails;
+
+  @Inject ChangeNotes.Factory changeNotesFactory;
+
+  @Inject PermissionBackend permissionBackend;
+
+  @Inject SubmitRuleEvaluator.Factory submitRuleEvaluatorFactory;
+
+  @Inject ChangeResource.Factory changeResourceFactory;
 
   /**
    * Check if the current patchset of the specified change has dependent unmerged changes.
@@ -64,18 +68,21 @@ public class AtomicityHelper {
    * @return true or false
    * @throws IOException
    * @throws NoSuchChangeException
+   * @throws NoSuchProjectException
    * @throws OrmException
+   * @throws PermissionBackendException
    */
   public boolean hasDependentReview(String project, int number)
-      throws IOException, NoSuchChangeException, OrmException {
+      throws IOException, NoSuchChangeException, NoSuchProjectException, OrmException,
+          PermissionBackendException {
     RevisionResource r = getRevisionResource(project, number);
-    RelatedInfo related = getRelated.apply(r);
+    RelatedChangesInfo related = getRelated.apply(r);
     log.debug(String.format("Checking for related changes on review %d", number));
 
     String checkedCommitSha1 = r.getPatchSet().getRevision().get();
     int firstParentIndex = 0;
     int i = 0;
-    for (ChangeAndCommit c : related.changes) {
+    for (RelatedChangeAndCommitInfo c : related.changes) {
       if (checkedCommitSha1.equals(c.commit.commit)) {
         firstParentIndex = i + 1;
         log.debug(
@@ -88,7 +95,8 @@ public class AtomicityHelper {
     }
 
     boolean hasNonMergedParent = false;
-    for (ChangeAndCommit c : related.changes.subList(firstParentIndex, related.changes.size())) {
+    for (RelatedChangeAndCommitInfo c :
+        related.changes.subList(firstParentIndex, related.changes.size())) {
       if (!ChangeStatus.MERGED.toString().equals(c.status)) {
         log.info(
             String.format(
@@ -105,7 +113,7 @@ public class AtomicityHelper {
    * Check if a change is an atomic change or not. A change is atomic if it has the atomic topic
    * prefix.
    *
-   * @param change a ChangeAttribute instance
+   * @param change a Change instance
    * @return true or false
    */
   public boolean isAtomicReview(final Change change) {
@@ -131,7 +139,7 @@ public class AtomicityHelper {
             new com.google.gerrit.reviewdb.client.Change.Id(change));
     // For draft reviews, the patchSet must be set to avoid an NPE.
     final List<SubmitRecord> cansubmit =
-        new SubmitRuleEvaluator(changeData).setPatchSet(changeData.currentPatchSet()).evaluate();
+        submitRuleEvaluatorFactory.create(SubmitRuleOptions.defaults()).evaluate(changeData);
     log.debug(String.format("Checking if change %d is submitable.", change));
     for (SubmitRecord submit : cansubmit) {
       if (submit.status != SubmitRecord.Status.OK) {
@@ -143,40 +151,40 @@ public class AtomicityHelper {
     return true;
   }
 
-  /**
-   * Merge a review.
-   *
-   * @param info
-   * @throws RestApiException
-   * @throws NoSuchChangeException
-   * @throws OrmException
-   * @throws IOException
-   */
-  public void mergeReview(String project, int changeNumber)
-      throws RestApiException, NoSuchChangeException, OrmException, IOException {
-    submitter.apply(getRevisionResource(project, changeNumber), new SubmitInput());
+  /** Merge a review. */
+  public void mergeReview(String project, int number) throws Exception {
+    submitter.apply(getRevisionResource(project, number), new SubmitInput());
   }
 
   public RevisionResource getRevisionResource(String project, int changeNumber)
-      throws NoSuchChangeException, OrmException {
-    ChangeControl ctl =
-        changeFactory.validateFor(
-            db.get(), new com.google.gerrit.reviewdb.client.Change.Id(changeNumber), getBotUser());
-    ChangeData changeData =
-        changeDataFactory.create(
-            db.get(),
-            new Project.NameKey(project),
-            new com.google.gerrit.reviewdb.client.Change.Id(changeNumber));
-    RevisionResource r = new RevisionResource(collection.parse(ctl), changeData.currentPatchSet());
-    return r;
+      throws OrmException {
+    com.google.gerrit.reviewdb.client.Change.Id changeId =
+        new com.google.gerrit.reviewdb.client.Change.Id(changeNumber);
+    ChangeNotes notes = changeNotesFactory.createChecked(changeId);
+    try {
+      permissionBackend.user(getBotUser()).change(notes).database(db).check(READ);
+      ChangeData changeData =
+          changeDataFactory.create(db.get(), new Project.NameKey(project), changeId);
+
+      RevisionResource r =
+          new RevisionResource(
+              changeResourceFactory.create(changeData.notes(), getBotUser()),
+              changeData.currentPatchSet());
+      return r;
+    } catch (AuthException | PermissionBackendException e) {
+      throw new NoSuchChangeException(changeId);
+    }
   }
 
   private IdentifiedUser getBotUser() {
-    final Set<Account.Id> ids = byEmailCache.get(config.getBotEmail());
-    if (ids.isEmpty()) {
-      throw new RuntimeException("No user found with email: " + config.getBotEmail());
+    try {
+      Set<Account.Id> ids = emails.getAccountFor(config.getBotEmail());
+      if (ids.isEmpty()) {
+        throw new RuntimeException("No user found with email: " + config.getBotEmail());
+      }
+      return factory.create(ids.iterator().next());
+    } catch (IOException | OrmException e) {
+      throw new RuntimeException("Unable to get account with email: " + config.getBotEmail(), e);
     }
-    final IdentifiedUser bot = factory.create(ids.iterator().next());
-    return bot;
   }
 }

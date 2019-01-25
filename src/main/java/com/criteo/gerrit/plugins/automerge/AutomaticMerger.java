@@ -15,34 +15,30 @@
 package com.criteo.gerrit.plugins.automerge;
 
 import com.google.common.collect.Lists;
-import com.google.gerrit.common.EventListener;
 import com.google.gerrit.extensions.api.GerritApi;
+import com.google.gerrit.extensions.api.changes.ChangeApi;
 import com.google.gerrit.extensions.client.ListChangesOption;
 import com.google.gerrit.extensions.common.ChangeInfo;
 import com.google.gerrit.extensions.events.LifecycleListener;
 import com.google.gerrit.extensions.restapi.RestApiException;
 import com.google.gerrit.reviewdb.server.ReviewDb;
-import com.google.gerrit.server.change.GetRelated;
-import com.google.gerrit.server.change.PostReview;
-import com.google.gerrit.server.change.Submit;
 import com.google.gerrit.server.data.AccountAttribute;
 import com.google.gerrit.server.data.ChangeAttribute;
 import com.google.gerrit.server.events.ChangeEvent;
 import com.google.gerrit.server.events.CommentAddedEvent;
-import com.google.gerrit.server.events.DraftPublishedEvent;
 import com.google.gerrit.server.events.Event;
+import com.google.gerrit.server.events.EventListener;
 import com.google.gerrit.server.events.PatchSetCreatedEvent;
 import com.google.gerrit.server.events.RefUpdatedEvent;
 import com.google.gerrit.server.events.ReviewerDeletedEvent;
 import com.google.gerrit.server.events.TopicChangedEvent;
 import com.google.gerrit.server.git.MergeUtil;
-import com.google.gerrit.server.project.NoSuchChangeException;
 import com.google.gerrit.server.query.change.ChangeData;
-import com.google.gerrit.server.update.UpdateException;
-import com.google.gwtorm.server.OrmException;
+import com.google.gerrit.server.restapi.change.GetRelated;
+import com.google.gerrit.server.restapi.change.PostReview;
+import com.google.gerrit.server.restapi.change.Submit;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import java.io.IOException;
 import java.util.EnumSet;
 import java.util.List;
 import org.slf4j.Logger;
@@ -76,7 +72,6 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
   @Override
   public synchronized void onEvent(final Event event) {
     if (event instanceof TopicChangedEvent
-        || event instanceof DraftPublishedEvent
         || event instanceof ReviewerDeletedEvent
         || // A blocking score might be removed when a reviewer is deleted.
         event instanceof PatchSetCreatedEvent) {
@@ -98,7 +93,7 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
     }
     try {
       autoSubmitIfMergeable(change);
-    } catch (OrmException | RestApiException | IOException | UpdateException e) {
+    } catch (Exception e) {
       log.error("An exception occured while trying to merge change #" + change.number, e);
     }
   }
@@ -112,7 +107,7 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
     try {
       checkReviewExists(change.number);
       autoSubmitIfMergeable(Change.from(change));
-    } catch (RestApiException | OrmException | UpdateException | IOException e) {
+    } catch (Exception e) {
       log.error("An exception occured while trying to atomic merge a change.", e);
       throw new RuntimeException(e);
     }
@@ -137,7 +132,7 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
                           + refName
                           + ": Submitting ...");
                   autoSubmitIfMergeable(Change.from(submittable));
-                } catch (UpdateException | RestApiException | OrmException | IOException e) {
+                } catch (Exception e) {
                   log.error(
                       "Cannot autosubmit change "
                           + submittable._number
@@ -154,8 +149,7 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
     }
   }
 
-  private void autoSubmitIfMergeable(Change change)
-      throws OrmException, RestApiException, NoSuchChangeException, IOException, UpdateException {
+  private void autoSubmitIfMergeable(Change change) throws Exception {
     if (atomicityHelper.isSubmittable(change.project, change.number)) {
       if (atomicityHelper.isAtomicReview(change)) {
         attemptToMergeAtomic(change);
@@ -183,14 +177,19 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
     return false;
   }
 
-  private void attemptToMergeAtomic(Change change)
-      throws RestApiException, OrmException, NoSuchChangeException, IOException, UpdateException {
+  private void attemptToMergeAtomic(Change change) throws Exception {
     final List<ChangeInfo> related = Lists.newArrayList();
-    related.addAll(
-        api.changes()
-            .query("status: open AND topic: " + change.topic)
-            .withOption(ListChangesOption.CURRENT_REVISION)
-            .get());
+    if (atomicityHelper.isAtomicReview(change)) {
+      related.addAll(
+          api.changes()
+              .query("status: open AND topic: " + change.topic)
+              .withOption(ListChangesOption.CURRENT_REVISION)
+              .get());
+    } else {
+      ChangeApi changeApi = api.changes().id(change.project, change.branch, change.id);
+      related.add(changeApi.get(EnumSet.of(ListChangesOption.CURRENT_REVISION)));
+    }
+
     for (final ChangeInfo info : related) {
       if (!atomicityHelper.isSubmittable(info.project, info._number)) {
         log.info(
@@ -224,8 +223,7 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
     }
   }
 
-  private void attemptToMergeNonAtomic(Change change)
-      throws IOException, OrmException, RestApiException {
+  private void attemptToMergeNonAtomic(Change change) throws Exception {
     // There may be a parent commit that it not merged while having all approvals
     // because it is part of a cross-repo. We take care to not let Gerrit merge it
     // by merging only the commits whose parents are already merged.
@@ -255,7 +253,7 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
         reviewUpdater.commentOnReview(
             change.project, change.number, config.atomicReviewsSameRepo.getContent());
       }
-    } catch (RestApiException | IOException | OrmException | UpdateException e) {
+    } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
