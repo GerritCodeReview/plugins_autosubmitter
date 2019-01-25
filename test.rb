@@ -179,16 +179,6 @@ class TestAutomerge < MiniTest::Test
     check_status(commit2, 'MERGED')
   end
 
-  def test_published_draft_is_autosubmitted
-    commit_id = create_review(PROJECT1, "review0 on #{PROJECT1}", draft: true)
-    approve_review(commit_id)
-    check_status(commit_id, 'DRAFT')
-
-    publish_draft(commit_id)
-
-    check_status(commit_id, 'MERGED')
-  end
-
   private
 
   def project_dir(project_name)
@@ -205,11 +195,7 @@ class TestAutomerge < MiniTest::Test
     reviews = gerrit_query(query)
     reviews.each do |review|
       review_number = review['number']
-      if review['status'] == 'DRAFT'
-        execute("#{GERRIT_SSH} gerrit review --delete #{review_number},1")
-      else
-        execute("#{GERRIT_SSH} gerrit review --abandon #{review_number},1")
-      end
+      execute("#{GERRIT_SSH} gerrit review --abandon #{review_number},1")
     end
   end
 
@@ -221,14 +207,14 @@ class TestAutomerge < MiniTest::Test
     change_id
   end
 
-  def create_review(project_name, message, topic = nil, change_id = nil, draft: false)
+  def create_review(project_name, message, topic = nil, change_id = nil)
     topic_suffix = "/#{topic}" if topic
     message = "#{message}\n\nChange-Id: #{change_id}" if change_id
     execute(["cd #{project_dir(project_name)}",
              "echo 0 >> a",
              "git add .",
              %Q(git commit -m "#{message}"),
-             "git push origin HEAD:refs/#{draft ? 'drafts' : 'for'}/master#{topic_suffix}"
+             "git push origin HEAD:refs/for/master#{topic_suffix}"
             ].join(" && "))
     commit_id = execute("cd #{project_dir(project_name)} && git rev-parse HEAD")
     refute(commit_id.empty?, "missing commit-id")
@@ -236,11 +222,7 @@ class TestAutomerge < MiniTest::Test
   end
 
   def approve_review(commit_id)
-    execute("#{GERRIT_SSH} gerrit review --verified 1 --code-review 2 #{commit_id}")
-  end
-
-  def publish_draft(commit_id)
-    execute("#{GERRIT_SSH} gerrit review --publish #{commit_id}")
+    execute("#{GERRIT_SSH} gerrit review --strict-labels --verified 1 --code-review 2 #{commit_id}")
   end
 
   def abandon_review(commit_id)
@@ -251,15 +233,17 @@ class TestAutomerge < MiniTest::Test
     reviews = gerrit_query("commit:#{commit_id}")
     assert_equal(1, reviews.size, "missing review with commit #{commit_id}")
     review = reviews[0]
-    assert_equal(expected_status, review['status'], "wrong status on review: #{review['number']}")
+    assert_equal(expected_status, review['status'], "wrong status on review #{review['number']} '#{review['subject']}'")
   end
 
   def check_label(commit_id, label_name, expected_label_value)
     reviews = gerrit_query("commit:#{commit_id}", "--all-approvals")
     assert_equal(1, reviews.size, "missing review with commit #{commit_id}")
     review = reviews[0]
-    code_review_approvals = review['patchSets'][0]['approvals'].select {|ap| ap['description'] == "Code-Review"}
-    refute(code_review_approvals.empty?)
+    approvals = review['patchSets'][0]['approvals']
+    refute(approvals.nil?, "No approval on #{commit_id}")
+    code_review_approvals = approvals.select {|ap| ap['description'] == "Code-Review"}
+    refute(code_review_approvals.empty?, "No code-review score on #{commit_id}")
     assert_equal(expected_label_value, code_review_approvals[0]['value'], "wrong label on review: #{review['number']}")
   end
 
