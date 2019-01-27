@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "325ba55b_9aee8b9e",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 1011123
+      },
+      "writtenOn": "2019-01-27T02:49:11Z",
+      "side": 1,
+      "message": "Log is missing",
+      "revId": "80f5eaae4f590db8027512bb494a46d086276248",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "590d5369_06cafbfb",
+        "filename": "src/test/java/com/criteo/gerrit/plugins/automerge/AutomaticMergerTest.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1011123
+      },
+      "writtenOn": "2019-01-27T02:49:11Z",
+      "side": 1,
+      "message": "The license header is missing from this file.",
+      "revId": "80f5eaae4f590db8027512bb494a46d086276248",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
+      "unresolved": true
+    }
+  ]
+}
