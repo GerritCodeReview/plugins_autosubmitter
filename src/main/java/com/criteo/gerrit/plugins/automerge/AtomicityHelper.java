@@ -8,13 +8,13 @@ import com.google.gerrit.extensions.api.changes.RelatedChangesInfo;
 import com.google.gerrit.extensions.api.changes.SubmitInput;
 import com.google.gerrit.extensions.client.ChangeStatus;
 import com.google.gerrit.extensions.restapi.AuthException;
-import com.google.gerrit.extensions.restapi.ResourceNotFoundException;
 import com.google.gerrit.extensions.restapi.RestApiException;
 import com.google.gerrit.reviewdb.client.Account;
 import com.google.gerrit.reviewdb.client.Project;
 import com.google.gerrit.reviewdb.server.ReviewDb;
 import com.google.gerrit.server.IdentifiedUser;
 import com.google.gerrit.server.account.Emails;
+import com.google.gerrit.server.change.ChangeResource;
 import com.google.gerrit.server.change.RevisionResource;
 import com.google.gerrit.server.notedb.ChangeNotes;
 import com.google.gerrit.server.permissions.PermissionBackend;
@@ -24,7 +24,6 @@ import com.google.gerrit.server.project.NoSuchProjectException;
 import com.google.gerrit.server.project.SubmitRuleEvaluator;
 import com.google.gerrit.server.project.SubmitRuleOptions;
 import com.google.gerrit.server.query.change.ChangeData;
-import com.google.gerrit.server.restapi.change.ChangesCollection;
 import com.google.gerrit.server.restapi.change.GetRelated;
 import com.google.gerrit.server.restapi.change.Submit;
 import com.google.gwtorm.server.OrmException;
@@ -41,8 +40,6 @@ public class AtomicityHelper {
   private static final Logger log = LoggerFactory.getLogger(AtomicityHelper.class);
 
   @Inject ChangeData.Factory changeDataFactory;
-
-  @Inject private ChangesCollection collection;
 
   @Inject AutomergeConfig config;
 
@@ -61,6 +58,8 @@ public class AtomicityHelper {
   @Inject PermissionBackend permissionBackend;
 
   @Inject SubmitRuleEvaluator.Factory submitRuleEvaluatorFactory;
+
+  @Inject ChangeResource.Factory changeResourceFactory;
 
   /**
    * Check if the current patchset of the specified change has dependent unmerged changes.
@@ -167,10 +166,13 @@ public class AtomicityHelper {
       permissionBackend.user(getBotUser()).change(notes).database(db).check(READ);
       ChangeData changeData =
           changeDataFactory.create(db.get(), new Project.NameKey(project), changeId);
+
       RevisionResource r =
-          new RevisionResource(collection.parse(changeId), changeData.currentPatchSet());
+          new RevisionResource(
+              changeResourceFactory.create(changeData.notes(), getBotUser()),
+              changeData.currentPatchSet());
       return r;
-    } catch (ResourceNotFoundException | AuthException | PermissionBackendException e) {
+    } catch (AuthException | PermissionBackendException e) {
       throw new NoSuchChangeException(changeId);
     }
   }
