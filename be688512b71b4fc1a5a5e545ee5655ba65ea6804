@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "fbe74880_df5ee80e",
+        "filename": "src/test/java/com/criteo/gerrit/plugins/automerge/AutomaticMergerTest.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1011123
+      },
+      "writtenOn": "2019-02-27T23:20:05Z",
+      "side": 1,
+      "message": "License header is missing.  Note that it\u0027s also missing on several other files in this project, and the copyright header is not AOSP.",
+      "revId": "be688512b71b4fc1a5a5e545ee5655ba65ea6804",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
+      "unresolved": true
+    }
+  ]
+}
