@@ -16,6 +16,24 @@
       "revId": "be688512b71b4fc1a5a5e545ee5655ba65ea6804",
       "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f66f10ba_1758e72e",
+        "filename": "src/test/java/com/criteo/gerrit/plugins/automerge/AutomaticMergerTest.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1006192
+      },
+      "writtenOn": "2019-03-07T22:24:36Z",
+      "side": 1,
+      "message": "Right, will address once the merge is done.\nWill upload a \"mass-update\" commit and merge that upstream.",
+      "parentUuid": "fbe74880_df5ee80e",
+      "revId": "be688512b71b4fc1a5a5e545ee5655ba65ea6804",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153",
+      "unresolved": false
     }
   ]
 }
