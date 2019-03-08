@@ -22,6 +22,7 @@ import com.google.gerrit.acceptance.NoHttpd;
 import com.google.gerrit.acceptance.PushOneCommit;
 import com.google.gerrit.acceptance.TestAccount;
 import com.google.gerrit.acceptance.TestPlugin;
+import com.google.gerrit.acceptance.testsuite.request.RequestScopeOperations;
 import com.google.gerrit.extensions.api.changes.ChangeApi;
 import com.google.gerrit.extensions.api.changes.Changes;
 import com.google.gerrit.extensions.api.changes.ReviewInput;
@@ -30,8 +31,6 @@ import com.google.gerrit.extensions.common.ChangeInfo;
 import com.google.gerrit.reviewdb.client.AccountGroup;
 import com.google.gerrit.server.account.externalids.ExternalIds;
 import com.google.inject.Inject;
-import java.util.Arrays;
-import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -45,6 +44,7 @@ public class AutomaticMergerTest extends LightweightPluginDaemonTest {
   private TestAccount botUser;
   private TestAccount regularUser;
   @Inject ExternalIds extIds;
+  @Inject RequestScopeOperations requestScopeOperations;
 
   @Before
   public void setup() throws Exception {
@@ -60,28 +60,29 @@ public class AutomaticMergerTest extends LightweightPluginDaemonTest {
   @Test
   @GerritConfig(name = "automerge.botEmail", value = "botuser@mycompany.com")
   public void changeReviewedShouldNotBeAutomaticallyMergedIfNotApproved() throws Exception {
-    int changeNum = createChangeNum(user);
+    String changeId = createChange(user);
 
-    assertThat(changesApi().id(changeNum).get().status).isEqualTo(ChangeStatus.NEW);
+    assertThat(changesApi().id(changeId).get().status).isEqualTo(ChangeStatus.NEW);
   }
 
   @Test
   @GerritConfig(name = "automerge.botEmail", value = "botuser@mycompany.com")
   public void changeReviewedShouldBeAutomaticallyMergedOnceApproved() throws Exception {
-    int changeNum = createChangeNum(user);
-    changesApi().id(changeNum).current().review(ReviewInput.approve());
+    String changeId = createChange(user);
+    changesApi().id(changeId).current().review(ReviewInput.approve());
 
-    assertThat(changesApi().id(changeNum).get().status).isEqualTo(ChangeStatus.MERGED);
+    assertThat(changesApi().id(changeId).get().status).isEqualTo(ChangeStatus.MERGED);
   }
 
   @Test
   @GerritConfig(name = "automerge.botEmail", value = "botuser@mycompany.com")
   public void changeShouldBeAutomaticallyMergedByBotUser() throws Exception {
-    int changeNum = createChangeNum(user);
-    ChangeApi changeApi = changesApi().id(changeNum);
+    requestScopeOperations.setApiUser(regularUser.id);
+    String changeId = createChange(user);
+    ChangeApi changeApi = changesApi().id(changeId);
     changeApi.current().review(ReviewInput.approve());
 
-    ChangeInfo changeInfo = changeApi.get();
+    ChangeInfo changeInfo = gApi.changes().id(changeId).get();
     assertThat(changeInfo.submitter).isNotNull();
     assertThat(changeInfo.submitter._accountId).isEqualTo(new Integer(botUser.id.get()));
     assertThat(changeInfo.submitter.email).isEqualTo(botUser.email);
@@ -92,19 +93,15 @@ public class AutomaticMergerTest extends LightweightPluginDaemonTest {
   }
 
   private Changes changesApi() {
-    setApiUser(regularUser);
     return gApi.changes();
   }
 
-  private int createChangeNum(TestAccount user) throws Exception {
-    List<String> msgs =
-        Arrays.asList(createChangeAsUser("refs/for/master", user).getMessage().split("\n"));
-    String changeUrl = msgs.get(msgs.size() - 1).trim().split(" ")[0];
-    return Integer.parseInt(changeUrl.substring(changeUrl.lastIndexOf('/') + 1));
+  private String createChange(TestAccount user) throws Exception {
+    return createChangeAsUser("refs/for/master", user).getChangeId();
   }
 
   protected PushOneCommit.Result createChangeAsUser(String ref, TestAccount user) throws Exception {
-    PushOneCommit.Result result = pushFactory.create(db, user.getIdent(), testRepo).to(ref);
+    PushOneCommit.Result result = pushFactory.create(user.getIdent(), testRepo).to(ref);
     result.assertOkStatus();
     return result;
   }

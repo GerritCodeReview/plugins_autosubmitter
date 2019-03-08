@@ -22,7 +22,6 @@ import com.google.gerrit.extensions.client.ListChangesOption;
 import com.google.gerrit.extensions.common.ChangeInfo;
 import com.google.gerrit.extensions.events.LifecycleListener;
 import com.google.gerrit.extensions.restapi.RestApiException;
-import com.google.gerrit.reviewdb.server.ReviewDb;
 import com.google.gerrit.server.data.AccountAttribute;
 import com.google.gerrit.server.data.ChangeAttribute;
 import com.google.gerrit.server.events.ChangeEvent;
@@ -57,8 +56,6 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
   @Inject ChangeData.Factory changeDataFactory;
 
   @Inject private AutomergeConfig config;
-
-  @Inject Provider<ReviewDb> db;
 
   @Inject GetRelated getRelated;
 

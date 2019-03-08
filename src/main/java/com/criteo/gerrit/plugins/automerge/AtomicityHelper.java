@@ -22,10 +22,8 @@ import com.google.gerrit.extensions.api.changes.RelatedChangesInfo;
 import com.google.gerrit.extensions.api.changes.SubmitInput;
 import com.google.gerrit.extensions.client.ChangeStatus;
 import com.google.gerrit.extensions.restapi.AuthException;
-import com.google.gerrit.extensions.restapi.RestApiException;
 import com.google.gerrit.reviewdb.client.Account;
 import com.google.gerrit.reviewdb.client.Project;
-import com.google.gerrit.reviewdb.server.ReviewDb;
 import com.google.gerrit.server.IdentifiedUser;
 import com.google.gerrit.server.account.Emails;
 import com.google.gerrit.server.change.ChangeResource;
@@ -39,10 +37,10 @@ import com.google.gerrit.server.project.SubmitRuleEvaluator;
 import com.google.gerrit.server.project.SubmitRuleOptions;
 import com.google.gerrit.server.query.change.ChangeData;
 import com.google.gerrit.server.restapi.change.GetRelated;
+import com.google.gerrit.server.restapi.change.PostReview;
 import com.google.gerrit.server.restapi.change.Submit;
 import com.google.gwtorm.server.OrmException;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
@@ -56,8 +54,6 @@ public class AtomicityHelper {
   @Inject ChangeData.Factory changeDataFactory;
 
   @Inject AutomergeConfig config;
-
-  @Inject Provider<ReviewDb> db;
 
   @Inject private IdentifiedUser.GenericFactory factory;
 
@@ -88,8 +84,8 @@ public class AtomicityHelper {
    * @throws PermissionBackendException
    */
   public boolean hasDependentReview(String project, int number)
-      throws RestApiException, IOException, NoSuchChangeException, NoSuchProjectException,
-          OrmException, PermissionBackendException {
+      throws IOException, NoSuchChangeException, NoSuchProjectException, OrmException,
+          PermissionBackendException {
     RevisionResource r = getRevisionResource(project, number);
     RelatedChangesInfo related = getRelated.apply(r);
     log.debug(String.format("Checking for related changes on review %d", number));
@@ -149,9 +145,7 @@ public class AtomicityHelper {
   public boolean isSubmittable(String project, int change) throws OrmException {
     ChangeData changeData =
         changeDataFactory.create(
-            db.get(),
-            new Project.NameKey(project),
-            new com.google.gerrit.reviewdb.client.Change.Id(change));
+            new Project.NameKey(project), new com.google.gerrit.reviewdb.client.Change.Id(change));
     // For draft reviews, the patchSet must be set to avoid an NPE.
     final List<SubmitRecord> cansubmit =
         submitRuleEvaluatorFactory.create(SubmitRuleOptions.defaults()).evaluate(changeData);
@@ -172,14 +166,13 @@ public class AtomicityHelper {
   }
 
   public RevisionResource getRevisionResource(String project, int changeNumber)
-      throws RestApiException, OrmException, IOException {
+      throws OrmException {
     com.google.gerrit.reviewdb.client.Change.Id changeId =
         new com.google.gerrit.reviewdb.client.Change.Id(changeNumber);
     ChangeNotes notes = changeNotesFactory.createChecked(changeId);
     try {
-      permissionBackend.user(getBotUser()).change(notes).database(db).check(READ);
-      ChangeData changeData =
-          changeDataFactory.create(db.get(), new Project.NameKey(project), changeId);
+      permissionBackend.user(getBotUser()).change(notes).check(READ);
+      ChangeData changeData = changeDataFactory.create(new Project.NameKey(project), changeId);
 
       RevisionResource r =
           new RevisionResource(
