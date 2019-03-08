@@ -1,18 +1,34 @@
+// Copyright (C) 2019 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package com.criteo.gerrit.plugins.automerge;
 
 import static com.google.gerrit.server.permissions.ChangePermission.READ;
 
 import com.google.gerrit.common.data.SubmitRecord;
+import com.google.gerrit.extensions.api.changes.RelatedChangeAndCommitInfo;
+import com.google.gerrit.extensions.api.changes.RelatedChangesInfo;
 import com.google.gerrit.extensions.api.changes.SubmitInput;
 import com.google.gerrit.extensions.client.ChangeStatus;
 import com.google.gerrit.extensions.restapi.AuthException;
-import com.google.gerrit.extensions.restapi.ResourceNotFoundException;
 import com.google.gerrit.extensions.restapi.RestApiException;
 import com.google.gerrit.reviewdb.client.Account;
 import com.google.gerrit.reviewdb.client.Project;
 import com.google.gerrit.reviewdb.server.ReviewDb;
 import com.google.gerrit.server.IdentifiedUser;
 import com.google.gerrit.server.account.Emails;
+import com.google.gerrit.server.change.ChangeResource;
 import com.google.gerrit.server.change.RevisionResource;
 import com.google.gerrit.server.notedb.ChangeNotes;
 import com.google.gerrit.server.permissions.PermissionBackend;
@@ -22,10 +38,7 @@ import com.google.gerrit.server.project.NoSuchProjectException;
 import com.google.gerrit.server.project.SubmitRuleEvaluator;
 import com.google.gerrit.server.project.SubmitRuleOptions;
 import com.google.gerrit.server.query.change.ChangeData;
-import com.google.gerrit.server.restapi.change.ChangesCollection;
 import com.google.gerrit.server.restapi.change.GetRelated;
-import com.google.gerrit.server.restapi.change.GetRelated.ChangeAndCommit;
-import com.google.gerrit.server.restapi.change.GetRelated.RelatedInfo;
 import com.google.gerrit.server.restapi.change.Submit;
 import com.google.gwtorm.server.OrmException;
 import com.google.inject.Inject;
@@ -41,8 +54,6 @@ public class AtomicityHelper {
   private static final Logger log = LoggerFactory.getLogger(AtomicityHelper.class);
 
   @Inject ChangeData.Factory changeDataFactory;
-
-  @Inject private ChangesCollection collection;
 
   @Inject AutomergeConfig config;
 
@@ -62,6 +73,8 @@ public class AtomicityHelper {
 
   @Inject SubmitRuleEvaluator.Factory submitRuleEvaluatorFactory;
 
+  @Inject ChangeResource.Factory changeResourceFactory;
+
   /**
    * Check if the current patchset of the specified change has dependent unmerged changes.
    *
@@ -78,13 +91,13 @@ public class AtomicityHelper {
       throws RestApiException, IOException, NoSuchChangeException, NoSuchProjectException,
           OrmException, PermissionBackendException {
     RevisionResource r = getRevisionResource(project, number);
-    RelatedInfo related = getRelated.apply(r);
+    RelatedChangesInfo related = getRelated.apply(r);
     log.debug(String.format("Checking for related changes on review %d", number));
 
     String checkedCommitSha1 = r.getPatchSet().getRevision().get();
     int firstParentIndex = 0;
     int i = 0;
-    for (ChangeAndCommit c : related.changes) {
+    for (RelatedChangeAndCommitInfo c : related.changes) {
       if (checkedCommitSha1.equals(c.commit.commit)) {
         firstParentIndex = i + 1;
         log.debug(
@@ -97,7 +110,8 @@ public class AtomicityHelper {
     }
 
     boolean hasNonMergedParent = false;
-    for (ChangeAndCommit c : related.changes.subList(firstParentIndex, related.changes.size())) {
+    for (RelatedChangeAndCommitInfo c :
+        related.changes.subList(firstParentIndex, related.changes.size())) {
       if (!ChangeStatus.MERGED.toString().equals(c.status)) {
         log.info(
             String.format(
@@ -166,10 +180,13 @@ public class AtomicityHelper {
       permissionBackend.user(getBotUser()).change(notes).database(db).check(READ);
       ChangeData changeData =
           changeDataFactory.create(db.get(), new Project.NameKey(project), changeId);
+
       RevisionResource r =
-          new RevisionResource(collection.parse(changeId), changeData.currentPatchSet());
+          new RevisionResource(
+              changeResourceFactory.create(changeData.notes(), getBotUser()),
+              changeData.currentPatchSet());
       return r;
-    } catch (ResourceNotFoundException | AuthException | PermissionBackendException e) {
+    } catch (AuthException | PermissionBackendException e) {
       throw new NoSuchChangeException(changeId);
     }
   }
