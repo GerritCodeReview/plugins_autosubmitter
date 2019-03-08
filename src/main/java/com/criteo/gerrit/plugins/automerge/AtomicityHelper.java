@@ -25,7 +25,6 @@ import com.google.gerrit.extensions.restapi.AuthException;
 import com.google.gerrit.extensions.restapi.RestApiException;
 import com.google.gerrit.reviewdb.client.Account;
 import com.google.gerrit.reviewdb.client.Project;
-import com.google.gerrit.reviewdb.server.ReviewDb;
 import com.google.gerrit.server.IdentifiedUser;
 import com.google.gerrit.server.account.Emails;
 import com.google.gerrit.server.change.ChangeResource;
@@ -42,7 +41,6 @@ import com.google.gerrit.server.restapi.change.GetRelated;
 import com.google.gerrit.server.restapi.change.Submit;
 import com.google.gwtorm.server.OrmException;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
@@ -56,8 +54,6 @@ public class AtomicityHelper {
   @Inject ChangeData.Factory changeDataFactory;
 
   @Inject AutomergeConfig config;
-
-  @Inject Provider<ReviewDb> db;
 
   @Inject private IdentifiedUser.GenericFactory factory;
 
@@ -149,9 +145,7 @@ public class AtomicityHelper {
   public boolean isSubmittable(String project, int change) throws OrmException {
     ChangeData changeData =
         changeDataFactory.create(
-            db.get(),
-            new Project.NameKey(project),
-            new com.google.gerrit.reviewdb.client.Change.Id(change));
+            new Project.NameKey(project), new com.google.gerrit.reviewdb.client.Change.Id(change));
     // For draft reviews, the patchSet must be set to avoid an NPE.
     final List<SubmitRecord> cansubmit =
         submitRuleEvaluatorFactory.create(SubmitRuleOptions.defaults()).evaluate(changeData);
@@ -177,9 +171,8 @@ public class AtomicityHelper {
         new com.google.gerrit.reviewdb.client.Change.Id(changeNumber);
     ChangeNotes notes = changeNotesFactory.createChecked(changeId);
     try {
-      permissionBackend.user(getBotUser()).change(notes).database(db).check(READ);
-      ChangeData changeData =
-          changeDataFactory.create(db.get(), new Project.NameKey(project), changeId);
+      permissionBackend.user(getBotUser()).change(notes).check(READ);
+      ChangeData changeData = changeDataFactory.create(new Project.NameKey(project), changeId);
 
       RevisionResource r =
           new RevisionResource(

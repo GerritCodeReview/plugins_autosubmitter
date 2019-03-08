@@ -22,6 +22,7 @@ import com.google.gerrit.acceptance.NoHttpd;
 import com.google.gerrit.acceptance.PushOneCommit;
 import com.google.gerrit.acceptance.TestAccount;
 import com.google.gerrit.acceptance.TestPlugin;
+import com.google.gerrit.acceptance.testsuite.request.RequestScopeOperations;
 import com.google.gerrit.extensions.api.changes.ChangeApi;
 import com.google.gerrit.extensions.api.changes.Changes;
 import com.google.gerrit.extensions.api.changes.ReviewInput;
@@ -45,6 +46,7 @@ public class AutomaticMergerTest extends LightweightPluginDaemonTest {
   private TestAccount botUser;
   private TestAccount regularUser;
   @Inject ExternalIds extIds;
+  @Inject RequestScopeOperations requestScopeOperations;
 
   @Before
   public void setup() throws Exception {
@@ -92,7 +94,7 @@ public class AutomaticMergerTest extends LightweightPluginDaemonTest {
   }
 
   private Changes changesApi() {
-    setApiUser(regularUser);
+    requestScopeOperations.setApiUser(regularUser.id);
     return gApi.changes();
   }
 
@@ -104,7 +106,7 @@ public class AutomaticMergerTest extends LightweightPluginDaemonTest {
   }
 
   protected PushOneCommit.Result createChangeAsUser(String ref, TestAccount user) throws Exception {
-    PushOneCommit.Result result = pushFactory.create(db, user.getIdent(), testRepo).to(ref);
+    PushOneCommit.Result result = pushFactory.create(user.getIdent(), testRepo).to(ref);
     result.assertOkStatus();
     return result;
   }
