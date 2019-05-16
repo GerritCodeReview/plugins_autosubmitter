@@ -77,15 +77,15 @@ public class AutomaticMergerTest extends LightweightPluginDaemonTest {
   @Test
   @GerritConfig(name = "automerge.botEmail", value = "botuser@mycompany.com")
   public void changeShouldBeAutomaticallyMergedByBotUser() throws Exception {
-    requestScopeOperations.setApiUser(regularUser.id);
+    requestScopeOperations.setApiUser(regularUser.id());
     String changeId = createChange(user);
     ChangeApi changeApi = changesApi().id(changeId);
     changeApi.current().review(ReviewInput.approve());
 
     ChangeInfo changeInfo = gApi.changes().id(changeId).get();
     assertThat(changeInfo.submitter).isNotNull();
-    assertThat(changeInfo.submitter._accountId).isEqualTo(new Integer(botUser.id.get()));
-    assertThat(changeInfo.submitter.email).isEqualTo(botUser.email);
+    assertThat(changeInfo.submitter._accountId).isEqualTo(new Integer(botUser.id().get()));
+    assertThat(changeInfo.submitter.email).isEqualTo(botUser.email());
   }
 
   private AccountGroup.UUID groupUUID(String name) {
@@ -101,7 +101,7 @@ public class AutomaticMergerTest extends LightweightPluginDaemonTest {
   }
 
   protected PushOneCommit.Result createChangeAsUser(String ref, TestAccount user) throws Exception {
-    PushOneCommit.Result result = pushFactory.create(user.getIdent(), testRepo).to(ref);
+    PushOneCommit.Result result = pushFactory.create(user.newIdent(), testRepo).to(ref);
     result.assertOkStatus();
     return result;
   }

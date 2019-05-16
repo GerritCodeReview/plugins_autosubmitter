@@ -17,6 +17,7 @@ package com.criteo.gerrit.plugins.automerge;
 import static com.google.gerrit.server.permissions.ChangePermission.READ;
 
 import com.google.gerrit.common.data.SubmitRecord;
+import com.google.gerrit.exceptions.StorageException;
 import com.google.gerrit.extensions.api.changes.RelatedChangeAndCommitInfo;
 import com.google.gerrit.extensions.api.changes.RelatedChangesInfo;
 import com.google.gerrit.extensions.api.changes.SubmitInput;
@@ -39,7 +40,6 @@ import com.google.gerrit.server.query.change.ChangeData;
 import com.google.gerrit.server.restapi.change.GetRelated;
 import com.google.gerrit.server.restapi.change.PostReview;
 import com.google.gerrit.server.restapi.change.Submit;
-import com.google.gwtorm.server.OrmException;
 import com.google.inject.Inject;
 import java.io.IOException;
 import java.util.List;
@@ -80,11 +80,10 @@ public class AtomicityHelper {
    * @throws IOException
    * @throws NoSuchChangeException
    * @throws NoSuchProjectException
-   * @throws OrmException
    * @throws PermissionBackendException
    */
   public boolean hasDependentReview(String project, int number)
-      throws IOException, NoSuchChangeException, NoSuchProjectException, OrmException,
+      throws IOException, NoSuchChangeException, NoSuchProjectException,
           PermissionBackendException {
     RevisionResource r = getRevisionResource(project, number);
     RelatedChangesInfo related = getRelated.apply(r);
@@ -140,9 +139,8 @@ public class AtomicityHelper {
    * @param project a change project
    * @param change a change number
    * @return true or false
-   * @throws OrmException
    */
-  public boolean isSubmittable(String project, int change) throws OrmException {
+  public boolean isSubmittable(String project, int change) {
     ChangeData changeData =
         changeDataFactory.create(
             new Project.NameKey(project), new com.google.gerrit.reviewdb.client.Change.Id(change));
@@ -165,8 +163,7 @@ public class AtomicityHelper {
     submitter.apply(getRevisionResource(project, number), new SubmitInput());
   }
 
-  public RevisionResource getRevisionResource(String project, int changeNumber)
-      throws OrmException {
+  public RevisionResource getRevisionResource(String project, int changeNumber) {
     com.google.gerrit.reviewdb.client.Change.Id changeId =
         new com.google.gerrit.reviewdb.client.Change.Id(changeNumber);
     ChangeNotes notes = changeNotesFactory.createChecked(changeId);
@@ -191,7 +188,7 @@ public class AtomicityHelper {
         throw new RuntimeException("No user found with email: " + config.getBotEmail());
       }
       return factory.create(ids.iterator().next());
-    } catch (IOException | OrmException e) {
+    } catch (IOException | StorageException e) {
       throw new RuntimeException("Unable to get account with email: " + config.getBotEmail(), e);
     }
   }
