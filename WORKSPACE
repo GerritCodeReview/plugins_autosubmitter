@@ -3,7 +3,7 @@ workspace(name = "autosubmitter")
 load("//:bazlets.bzl", "load_bazlets")
 
 load_bazlets(
-    commit = "c2227415d5044f8439bd47edffb0f052f8da2ac5",
+    commit = "c9dad39dbf8c9fa3ec955ac5fb3e2312163136ee",
     #local_path = "/home/<user>/projects/bazlets",
 )
 
