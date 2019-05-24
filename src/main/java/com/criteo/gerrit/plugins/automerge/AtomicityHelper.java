@@ -88,7 +88,7 @@ public class AtomicityHelper {
     RelatedChangesInfo related = getRelated.apply(r);
     log.debug(String.format("Checking for related changes on review %d", number));
 
-    String checkedCommitSha1 = r.getPatchSet().getRevision().get();
+    String checkedCommitSha1 = r.getPatchSet().commitId().name();
     int firstParentIndex = 0;
     int i = 0;
     for (RelatedChangeAndCommitInfo c : related.changes) {
@@ -142,7 +142,7 @@ public class AtomicityHelper {
   public boolean isSubmittable(String project, int change) {
     ChangeData changeData =
         changeDataFactory.create(
-            new Project.NameKey(project), new com.google.gerrit.reviewdb.client.Change.Id(change));
+            Project.nameKey(project), com.google.gerrit.reviewdb.client.Change.id(change));
     // For draft reviews, the patchSet must be set to avoid an NPE.
     final List<SubmitRecord> cansubmit =
         submitRuleEvaluatorFactory.create(SubmitRuleOptions.defaults()).evaluate(changeData);
@@ -164,11 +164,11 @@ public class AtomicityHelper {
 
   public RevisionResource getRevisionResource(String project, int changeNumber) {
     com.google.gerrit.reviewdb.client.Change.Id changeId =
-        new com.google.gerrit.reviewdb.client.Change.Id(changeNumber);
+        com.google.gerrit.reviewdb.client.Change.id(changeNumber);
     ChangeNotes notes = changeNotesFactory.createChecked(changeId);
     try {
       permissionBackend.user(getBotUser()).change(notes).check(READ);
-      ChangeData changeData = changeDataFactory.create(new Project.NameKey(project), changeId);
+      ChangeData changeData = changeDataFactory.create(Project.nameKey(project), changeId);
 
       RevisionResource r =
           new RevisionResource(

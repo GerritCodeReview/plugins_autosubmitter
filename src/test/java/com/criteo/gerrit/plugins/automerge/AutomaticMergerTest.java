@@ -54,7 +54,7 @@ public class AutomaticMergerTest extends LightweightPluginDaemonTest {
     regularUser =
         accountCreator.create("developer", "developer@mycompany.com", "Developer", DEVELOPERS);
     grant(project, "refs/*", "submit", false, groupUUID(BOT_USERS));
-    grantLabel("Code-Review", -2, 2, project, "refs/*", false, groupUUID(DEVELOPERS), false);
+    grantLabel("Code-Review", -2, 2, project, "refs/*", groupUUID(DEVELOPERS), false);
   }
 
   @Test
@@ -89,7 +89,7 @@ public class AutomaticMergerTest extends LightweightPluginDaemonTest {
   }
 
   private AccountGroup.UUID groupUUID(String name) {
-    return groupCache.get(new AccountGroup.NameKey(name)).get().getGroupUUID();
+    return groupCache.get(AccountGroup.nameKey(name)).get().getGroupUUID();
   }
 
   private Changes changesApi() {
