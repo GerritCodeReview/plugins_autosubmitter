@@ -38,7 +38,6 @@ import com.google.gerrit.server.project.SubmitRuleEvaluator;
 import com.google.gerrit.server.project.SubmitRuleOptions;
 import com.google.gerrit.server.query.change.ChangeData;
 import com.google.gerrit.server.restapi.change.GetRelated;
-import com.google.gerrit.server.restapi.change.PostReview;
 import com.google.gerrit.server.restapi.change.Submit;
 import com.google.inject.Inject;
 import java.io.IOException;
