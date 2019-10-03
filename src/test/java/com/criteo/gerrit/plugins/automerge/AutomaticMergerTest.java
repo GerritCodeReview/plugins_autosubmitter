@@ -15,6 +15,9 @@
 package com.criteo.gerrit.plugins.automerge;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.gerrit.acceptance.testsuite.project.TestProjectUpdate.allow;
+import static com.google.gerrit.acceptance.testsuite.project.TestProjectUpdate.allowLabel;
+import static com.google.gerrit.common.data.Permission.SUBMIT;
 
 import com.google.gerrit.acceptance.GerritConfig;
 import com.google.gerrit.acceptance.LightweightPluginDaemonTest;
@@ -22,13 +25,13 @@ import com.google.gerrit.acceptance.NoHttpd;
 import com.google.gerrit.acceptance.PushOneCommit;
 import com.google.gerrit.acceptance.TestAccount;
 import com.google.gerrit.acceptance.TestPlugin;
+import com.google.gerrit.acceptance.testsuite.project.ProjectOperations;
 import com.google.gerrit.acceptance.testsuite.request.RequestScopeOperations;
 import com.google.gerrit.extensions.api.changes.ChangeApi;
 import com.google.gerrit.extensions.api.changes.Changes;
 import com.google.gerrit.extensions.api.changes.ReviewInput;
 import com.google.gerrit.extensions.client.ChangeStatus;
 import com.google.gerrit.extensions.common.ChangeInfo;
-import com.google.gerrit.reviewdb.client.AccountGroup;
 import com.google.gerrit.server.account.externalids.ExternalIds;
 import com.google.inject.Inject;
 import org.junit.Before;
@@ -45,6 +48,7 @@ public class AutomaticMergerTest extends LightweightPluginDaemonTest {
   private TestAccount regularUser;
   @Inject ExternalIds extIds;
   @Inject RequestScopeOperations requestScopeOperations;
+  @Inject private ProjectOperations projectOperations;
 
   @Before
   public void setup() throws Exception {
@@ -53,8 +57,13 @@ public class AutomaticMergerTest extends LightweightPluginDaemonTest {
     botUser = accountCreator.create("botuser", "botuser@mycompany.com", "Bot User", BOT_USERS);
     regularUser =
         accountCreator.create("developer", "developer@mycompany.com", "Developer", DEVELOPERS);
-    grant(project, "refs/*", "submit", false, groupUUID(BOT_USERS));
-    grantLabel("Code-Review", -2, 2, project, "refs/*", groupUUID(DEVELOPERS), false);
+
+    projectOperations
+        .project(project)
+        .forUpdate()
+        .add(allow(SUBMIT).ref("refs/*").group(groupUuid(BOT_USERS)))
+        .add(allowLabel("Code-Review").ref("refs/*").group(groupUuid(DEVELOPERS)).range(-2, 2))
+        .update();
   }
 
   @Test
@@ -86,10 +95,6 @@ public class AutomaticMergerTest extends LightweightPluginDaemonTest {
     assertThat(changeInfo.submitter).isNotNull();
     assertThat(changeInfo.submitter._accountId).isEqualTo(new Integer(botUser.id().get()));
     assertThat(changeInfo.submitter.email).isEqualTo(botUser.email());
-  }
-
-  private AccountGroup.UUID groupUUID(String name) {
-    return groupCache.get(AccountGroup.nameKey(name)).get().getGroupUUID();
   }
 
   private Changes changesApi() {

@@ -81,11 +81,9 @@ public class AtomicityHelper {
    * @throws NoSuchProjectException
    * @throws PermissionBackendException
    */
-  public boolean hasDependentReview(String project, int number)
-      throws IOException, NoSuchChangeException, NoSuchProjectException,
-          PermissionBackendException {
+  public boolean hasDependentReview(String project, int number) throws Exception {
     RevisionResource r = getRevisionResource(project, number);
-    RelatedChangesInfo related = getRelated.apply(r);
+    RelatedChangesInfo related = getRelated.apply(r).value();
     log.debug(String.format("Checking for related changes on review %d", number));
 
     String checkedCommitSha1 = r.getPatchSet().commitId().name();
