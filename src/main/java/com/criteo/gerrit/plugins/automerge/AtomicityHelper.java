@@ -17,14 +17,14 @@ package com.criteo.gerrit.plugins.automerge;
 import static com.google.gerrit.server.permissions.ChangePermission.READ;
 
 import com.google.gerrit.common.data.SubmitRecord;
+import com.google.gerrit.entities.Account;
+import com.google.gerrit.entities.Project;
 import com.google.gerrit.exceptions.StorageException;
 import com.google.gerrit.extensions.api.changes.RelatedChangeAndCommitInfo;
 import com.google.gerrit.extensions.api.changes.RelatedChangesInfo;
 import com.google.gerrit.extensions.api.changes.SubmitInput;
 import com.google.gerrit.extensions.client.ChangeStatus;
 import com.google.gerrit.extensions.restapi.AuthException;
-import com.google.gerrit.reviewdb.client.Account;
-import com.google.gerrit.reviewdb.client.Project;
 import com.google.gerrit.server.IdentifiedUser;
 import com.google.gerrit.server.account.Emails;
 import com.google.gerrit.server.change.ChangeResource;
@@ -140,7 +140,7 @@ public class AtomicityHelper {
   public boolean isSubmittable(String project, int change) {
     ChangeData changeData =
         changeDataFactory.create(
-            Project.nameKey(project), com.google.gerrit.reviewdb.client.Change.id(change));
+            Project.nameKey(project), com.google.gerrit.entities.Change.id(change));
     // For draft reviews, the patchSet must be set to avoid an NPE.
     final List<SubmitRecord> cansubmit =
         submitRuleEvaluatorFactory.create(SubmitRuleOptions.defaults()).evaluate(changeData);
@@ -161,8 +161,8 @@ public class AtomicityHelper {
   }
 
   public RevisionResource getRevisionResource(String project, int changeNumber) {
-    com.google.gerrit.reviewdb.client.Change.Id changeId =
-        com.google.gerrit.reviewdb.client.Change.id(changeNumber);
+    com.google.gerrit.entities.Change.Id changeId =
+        com.google.gerrit.entities.Change.id(changeNumber);
     ChangeNotes notes = changeNotesFactory.createChecked(changeId);
     try {
       permissionBackend.user(getBotUser()).change(notes).check(READ);
