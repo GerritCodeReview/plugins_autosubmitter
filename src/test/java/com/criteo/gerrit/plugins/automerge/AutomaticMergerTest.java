@@ -19,12 +19,12 @@ import static com.google.gerrit.acceptance.testsuite.project.TestProjectUpdate.a
 import static com.google.gerrit.acceptance.testsuite.project.TestProjectUpdate.allowLabel;
 import static com.google.gerrit.common.data.Permission.SUBMIT;
 
-import com.google.gerrit.acceptance.GerritConfig;
 import com.google.gerrit.acceptance.LightweightPluginDaemonTest;
 import com.google.gerrit.acceptance.NoHttpd;
 import com.google.gerrit.acceptance.PushOneCommit;
 import com.google.gerrit.acceptance.TestAccount;
 import com.google.gerrit.acceptance.TestPlugin;
+import com.google.gerrit.acceptance.config.GerritConfig;
 import com.google.gerrit.acceptance.testsuite.project.ProjectOperations;
 import com.google.gerrit.acceptance.testsuite.request.RequestScopeOperations;
 import com.google.gerrit.extensions.api.changes.ChangeApi;
@@ -54,9 +54,12 @@ public class AutomaticMergerTest extends LightweightPluginDaemonTest {
   public void setup() throws Exception {
     gApi.groups().create(BOT_USERS);
     gApi.groups().create(DEVELOPERS);
-    botUser = accountCreator.create("botuser", "botuser@mycompany.com", "Bot User", BOT_USERS);
+    botUser =
+        accountCreator.create(
+            "botuser", "botuser@mycompany.com", "Bot User", "Bot User", BOT_USERS);
     regularUser =
-        accountCreator.create("developer", "developer@mycompany.com", "Developer", DEVELOPERS);
+        accountCreator.create(
+            "developer", "developer@mycompany.com", "Developer", "Developer", DEVELOPERS);
 
     projectOperations
         .project(project)
