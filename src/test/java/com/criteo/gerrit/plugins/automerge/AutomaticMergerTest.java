@@ -17,7 +17,7 @@ package com.criteo.gerrit.plugins.automerge;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.gerrit.acceptance.testsuite.project.TestProjectUpdate.allow;
 import static com.google.gerrit.acceptance.testsuite.project.TestProjectUpdate.allowLabel;
-import static com.google.gerrit.common.data.Permission.SUBMIT;
+import static com.google.gerrit.entities.Permission.SUBMIT;
 
 import com.google.gerrit.acceptance.LightweightPluginDaemonTest;
 import com.google.gerrit.acceptance.NoHttpd;

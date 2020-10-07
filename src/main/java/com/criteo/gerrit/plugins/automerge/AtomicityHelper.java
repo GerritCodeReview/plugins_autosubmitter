@@ -16,9 +16,9 @@ package com.criteo.gerrit.plugins.automerge;
 
 import static com.google.gerrit.server.permissions.ChangePermission.READ;
 
-import com.google.gerrit.common.data.SubmitRecord;
 import com.google.gerrit.entities.Account;
 import com.google.gerrit.entities.Project;
+import com.google.gerrit.entities.SubmitRecord;
 import com.google.gerrit.exceptions.StorageException;
 import com.google.gerrit.extensions.api.changes.RelatedChangeAndCommitInfo;
 import com.google.gerrit.extensions.api.changes.RelatedChangesInfo;
