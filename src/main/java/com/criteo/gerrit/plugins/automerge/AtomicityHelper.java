@@ -163,7 +163,7 @@ public class AtomicityHelper {
   public RevisionResource getRevisionResource(String project, int changeNumber) {
     com.google.gerrit.entities.Change.Id changeId =
         com.google.gerrit.entities.Change.id(changeNumber);
-    ChangeNotes notes = changeNotesFactory.createChecked(changeId);
+    ChangeNotes notes = changeNotesFactory.createChecked(Project.nameKey(project), changeId);
     try {
       permissionBackend.user(getBotUser()).change(notes).check(READ);
       ChangeData changeData = changeDataFactory.create(Project.nameKey(project), changeId);
