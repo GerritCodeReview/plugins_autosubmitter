@@ -16,6 +16,24 @@
       "message": "@eryksz@gmail.com would it still compile against the `stable-3.[5,6,7]` branches not only against the `master`? @David have you verified it?",
       "revId": "86efab406083cdfc12b0e4ce9ad6e28612bb64ad",
       "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8e5db2b9_5bd694d9",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1014257
+      },
+      "writtenOn": "2022-11-12T19:08:58Z",
+      "side": 1,
+      "message": "I can confirm that it will compile against `stable-3.[5,6,7]`. But I have not verified if it works. Note that only in `stable-3.7` and `master` the `MergeUtil` class is annotated with `@AutoFactory`.",
+      "parentUuid": "8ad59b69_43d1a980",
+      "revId": "86efab406083cdfc12b0e4ce9ad6e28612bb64ad",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153"
     }
   ]
 }
