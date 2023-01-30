@@ -15,6 +15,12 @@
 
 package com.criteo.gerrit.plugins.automerge;
 
+import java.util.EnumSet;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.collect.Lists;
 import com.google.gerrit.extensions.api.GerritApi;
 import com.google.gerrit.extensions.api.changes.ChangeApi;
@@ -32,17 +38,13 @@ import com.google.gerrit.server.events.PatchSetCreatedEvent;
 import com.google.gerrit.server.events.RefUpdatedEvent;
 import com.google.gerrit.server.events.ReviewerDeletedEvent;
 import com.google.gerrit.server.events.TopicChangedEvent;
-import com.google.gerrit.server.git.MergeUtil;
+import com.google.gerrit.server.git.MergeUtilFactory;
 import com.google.gerrit.server.query.change.ChangeData;
 import com.google.gerrit.server.restapi.change.GetRelated;
 import com.google.gerrit.server.restapi.change.PostReview;
 import com.google.gerrit.server.restapi.change.Submit;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import java.util.EnumSet;
-import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /** Starts at the same time as the gerrit server, and sets up our change hook listener. */
 public class AutomaticMerger implements EventListener, LifecycleListener {
@@ -59,7 +61,7 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
 
   @Inject GetRelated getRelated;
 
-  @Inject MergeUtil.Factory mergeUtilFactory;
+  @Inject MergeUtilFactory mergeUtilFactory;
 
   @Inject Provider<PostReview> reviewer;
 
