@@ -32,7 +32,7 @@ import com.google.gerrit.server.events.PatchSetCreatedEvent;
 import com.google.gerrit.server.events.RefUpdatedEvent;
 import com.google.gerrit.server.events.ReviewerDeletedEvent;
 import com.google.gerrit.server.events.TopicChangedEvent;
-import com.google.gerrit.server.git.MergeUtil;
+import com.google.gerrit.server.git.MergeUtilFactory;
 import com.google.gerrit.server.query.change.ChangeData;
 import com.google.gerrit.server.restapi.change.GetRelated;
 import com.google.gerrit.server.restapi.change.PostReview;
@@ -59,7 +59,7 @@ public class AutomaticMerger implements EventListener, LifecycleListener {
 
   @Inject GetRelated getRelated;
 
-  @Inject MergeUtil.Factory mergeUtilFactory;
+  @Inject MergeUtilFactory mergeUtilFactory;
 
   @Inject Provider<PostReview> reviewer;
 
