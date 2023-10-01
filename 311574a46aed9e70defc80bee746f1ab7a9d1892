@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "47a5d696_7d481cf2",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1167847
+      },
+      "writtenOn": "2023-10-01T13:18:49Z",
+      "side": 1,
+      "message": "remove string structure software from group",
+      "revId": "311574a46aed9e70defc80bee746f1ab7a9d1892",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153"
+    }
+  ]
+}
