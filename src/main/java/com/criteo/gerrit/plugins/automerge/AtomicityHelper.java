@@ -18,7 +18,8 @@ import static com.google.gerrit.server.permissions.ChangePermission.READ;
 
 import com.google.gerrit.entities.Account;
 import com.google.gerrit.entities.Project;
-import com.google.gerrit.entities.SubmitRecord;
+import com.google.gerrit.entities.SubmitRequirement;
+import com.google.gerrit.entities.SubmitRequirementResult;
 import com.google.gerrit.exceptions.StorageException;
 import com.google.gerrit.extensions.api.changes.RelatedChangeAndCommitInfo;
 import com.google.gerrit.extensions.api.changes.RelatedChangesInfo;
@@ -34,14 +35,12 @@ import com.google.gerrit.server.permissions.PermissionBackend;
 import com.google.gerrit.server.permissions.PermissionBackendException;
 import com.google.gerrit.server.project.NoSuchChangeException;
 import com.google.gerrit.server.project.NoSuchProjectException;
-import com.google.gerrit.server.project.SubmitRuleEvaluator;
-import com.google.gerrit.server.project.SubmitRuleOptions;
 import com.google.gerrit.server.query.change.ChangeData;
 import com.google.gerrit.server.restapi.change.GetRelated;
 import com.google.gerrit.server.restapi.change.Submit;
 import com.google.inject.Inject;
 import java.io.IOException;
-import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,8 +64,6 @@ public class AtomicityHelper {
   @Inject ChangeNotes.Factory changeNotesFactory;
 
   @Inject PermissionBackend permissionBackend;
-
-  @Inject SubmitRuleEvaluator.Factory submitRuleEvaluatorFactory;
 
   @Inject ChangeResource.Factory changeResourceFactory;
 
@@ -141,13 +138,11 @@ public class AtomicityHelper {
     ChangeData changeData =
         changeDataFactory.create(
             Project.nameKey(project), com.google.gerrit.entities.Change.id(change));
-    // For draft reviews, the patchSet must be set to avoid an NPE.
-    final List<SubmitRecord> cansubmit =
-        submitRuleEvaluatorFactory.create(SubmitRuleOptions.defaults()).evaluate(changeData);
-    log.debug(String.format("Checking if change %d is submitable.", change));
-    for (SubmitRecord submit : cansubmit) {
-      if (submit.status != SubmitRecord.Status.OK) {
-        log.debug(String.format("Change %d is not submitable", change));
+
+    for(Map.Entry<SubmitRequirement, SubmitRequirementResult> req : changeData.submitRequirementsIncludingLegacy().entrySet()) {
+      log.debug(String.format("Checking if change %d is submitable.", change));
+      if (!req.getValue().fulfilled()) {
+        log.info(String.format("Change %d is not submitable: requirement %s is not fulfilled", change, req.getKey().name()));
         return false;
       }
     }
