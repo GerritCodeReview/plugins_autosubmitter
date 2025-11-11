@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "31c7cf99_914fc106",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1072905
+      },
+      "writtenOn": "2025-11-11T08:24:53Z",
+      "side": 1,
+      "message": "@luca.milanesio@gmail.com ping, can this be merged?",
+      "revId": "235f1da6c154cc0a6d4dcf863d123fd26ddf13be",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153"
+    }
+  ]
+}
