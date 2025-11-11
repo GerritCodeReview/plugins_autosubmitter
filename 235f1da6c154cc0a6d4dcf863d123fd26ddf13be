@@ -16,6 +16,46 @@
       "message": "@luca.milanesio@gmail.com ping, can this be merged?",
       "revId": "235f1da6c154cc0a6d4dcf863d123fd26ddf13be",
       "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a990b7b7_873e0d14",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1006192
+      },
+      "writtenOn": "2025-11-11T12:33:10Z",
+      "side": 1,
+      "message": "LGTM, just one minor nit.",
+      "revId": "235f1da6c154cc0a6d4dcf863d123fd26ddf13be",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d061f857_61961f8d",
+        "filename": "src/main/java/com/criteo/gerrit/plugins/automerge/AtomicityHelper.java",
+        "patchSetId": 5
+      },
+      "lineNbr": 144,
+      "author": {
+        "id": 1006192
+      },
+      "writtenOn": "2025-11-11T12:33:10Z",
+      "side": 1,
+      "message": "It would be useful to also debug which submit requirement is under scrutiny.\n\n```suggestion\n      log.debug(String.format(\"Checking if change %d is satisfy %s submit requirement.\", change, req.getKey().name()));\n```",
+      "range": {
+        "startLine": 144,
+        "startChar": 56,
+        "endLine": 144,
+        "endChar": 66
+      },
+      "revId": "235f1da6c154cc0a6d4dcf863d123fd26ddf13be",
+      "serverId": "173816e5-2b9a-37c3-8a2e-48639d4f1153"
     }
   ]
 }
